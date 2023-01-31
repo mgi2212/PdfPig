@@ -76,8 +76,8 @@
             // Apply rotation.
             if (rotation.SwapsAxis)
             {
-                mediaBox = new MediaBox(new PdfRectangle(mediaBox.Bounds.Bottom, 
-                    mediaBox.Bounds.Left, 
+                mediaBox = new MediaBox(new PdfRectangle(mediaBox.Bounds.Bottom,
+                    mediaBox.Bounds.Left,
                     mediaBox.Bounds.Top,
                     mediaBox.Bounds.Right));
                 cropBox = new CropBox(new PdfRectangle(cropBox.Bounds.Bottom,
@@ -85,7 +85,7 @@
                     cropBox.Bounds.Top,
                     cropBox.Bounds.Right));
             }
-            
+
             UserSpaceUnit userSpaceUnit = GetUserSpaceUnits(dictionary);
 
             PageContent content;
@@ -100,7 +100,7 @@
                     pdfScanner,
                     filterProvider,
                     resourceStore);
-                 // ignored for now, is it possible? check the spec...
+                // ignored for now, is it possible? check the spec...
             }
             else if (DirectObjectFinder.TryGet<ArrayToken>(contents, pdfScanner, out var array))
             {
@@ -146,7 +146,7 @@
                 content = GetContent(number, bytes, cropBox, userSpaceUnit, rotation, mediaBox, parsingOptions);
             }
 
-            var page = new Page(number, dictionary, mediaBox, cropBox, rotation, content, 
+            var page = new Page(number, dictionary, mediaBox, cropBox, rotation, content,
                 new AnnotationProvider(pdfScanner, dictionary),
                 pdfScanner);
 

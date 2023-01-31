@@ -131,5 +131,20 @@
         {
             return verticalWritingMetrics.GetDisplacementVector(characterIdentifier);
         }
+
+        public bool TryGetPath(int characterCode, out IReadOnlyList<PdfSubpath> path) => fontProgram.TryGetPath(characterCode, out path);
+
+        public bool TryGetPath(int characterCode, Func<int, int?> characterCodeToGlyphId, out IReadOnlyList<PdfSubpath> path)
+            => fontProgram.TryGetPath(characterCode, characterCodeToGlyphId, out path);
+
+        public bool TryGetNormalisedPath(int characterCode, out IReadOnlyList<PdfSubpath> path)
+        {
+            return TryGetPath(characterCode, out path);
+        }
+
+        public bool TryGetNormalisedPath(int characterCode, Func<int, int?> characterCodeToGlyphId, out IReadOnlyList<PdfSubpath> path)
+        {
+            return TryGetPath(characterCode, characterCodeToGlyphId, out path);
+        }
     }
 }
