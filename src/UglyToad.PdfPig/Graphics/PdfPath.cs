@@ -95,7 +95,7 @@
         /// </summary>
         internal PdfPath CloneEmpty()
         {
-            PdfPath newPath = new PdfPath();
+            var newPath = new PdfPath();
             if (IsClipping)
             {
                 newPath.SetClipping(FillingRule);

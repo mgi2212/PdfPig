@@ -98,6 +98,7 @@
                     EmptyArray<Union<XObjectContentRecord, InlineImage>>.Instance,
                     EmptyArray<MarkedContentElement>.Instance,
                     pdfScanner,
+                    pageContentParser,
                     filterProvider,
                     resourceStore);
                 // ignored for now, is it possible? check the spec...
@@ -150,10 +151,13 @@
                 new AnnotationProvider(pdfScanner, dictionary),
                 pdfScanner);
 
+            /*
+             * deactivated for image rendering
             for (var i = 0; i < stackDepth; i++)
             {
                 resourceStore.UnloadResourceDictionary();
             }
+            */
 
             return page;
         }

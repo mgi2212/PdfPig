@@ -182,7 +182,7 @@
 
             ProcessOperations(operations);
 
-            return new PageContent(operations, letters, paths, images, markedContents, pdfScanner, filterProvider, resourceStore);
+            return new PageContent(operations, letters, paths, images, markedContents, pdfScanner, pageContentParser, filterProvider, resourceStore);
         }
 
         private void ProcessOperations(IReadOnlyList<IGraphicsStateOperation> operations)

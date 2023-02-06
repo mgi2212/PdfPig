@@ -155,7 +155,7 @@
                 result[compositeLocation.Key] = ReadCompositeGlyph(data, compositeLocation.Value, compositeLocations, result, emptyGlyph);
             }
 
-            tableBytes = null;
+            // tableBytes = null; // remove for image rendering
 
             return result;
         }
