@@ -223,13 +223,6 @@ namespace UglyToad.PdfPig.Tests.Fonts.TrueType.Parser
             }
         }
 
-        // this creates an onCurve point that is between point1 and point2
-        private GlyphPoint midValue(GlyphPoint point1, GlyphPoint point2)
-        {
-            // this constructs an on-curve, non-endofcountour point
-            return new GlyphPoint(midValue(point1.X, point2.X), midValue(point1.Y, point2.Y), true, false); // TODO check if false, false correct
-        }
-
         [Fact]
         public void ParseIssue258CorruptNameTable()
         {

@@ -1,10 +1,7 @@
 ﻿namespace UglyToad.PdfPig.SystemDrawing
 {
-    using System;
-    using System.Collections.Generic;
     using System.Drawing;
     using System.Drawing.Drawing2D;
-    using System.Text;
     using UglyToad.PdfPig.Core;
     using UglyToad.PdfPig.Graphics;
     using UglyToad.PdfPig.Graphics.Colors;

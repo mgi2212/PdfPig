@@ -249,7 +249,7 @@
                 else
                 {
                     var transformedGlyphBounds = PerformantRectangleTransformer
-                    .Transform(renderingMatrix, textMatrix, transformationMatrix, boundingBox.GlyphBounds);
+                        .Transform(renderingMatrix, textMatrix, transformationMatrix, boundingBox.GlyphBounds);
 
                     var transformedPdfBounds = PerformantRectangleTransformer
                         .Transform(renderingMatrix, textMatrix, transformationMatrix, new PdfRectangle(0, 0, boundingBox.Width, 0));
@@ -542,22 +542,6 @@
 
             AddCurrentSubpath();
 
-            /*
-            if (CurrentPath.IsClipping)
-            {
-                if (!clipPaths)
-                {
-                    // if we don't clip paths, add clipping path to paths
-                    paths.Add(CurrentPath);
-                    markedContentStack.AddPath(CurrentPath);
-                }
-                CurrentPath = null;
-                return;
-            }
-            paths.Add(CurrentPath);
-            markedContentStack.AddPath(CurrentPath);
-            */
-
             CurrentPath = null;
         }
 
@@ -577,7 +561,8 @@
             {
                 CurrentPath.LineDashPattern = currentState.LineDashPattern;
                 CurrentPath.StrokeColor = currentState.CurrentStrokingColor;
-                CurrentPath.LineWidth = currentState.LineWidth;
+                // https://stackoverflow.com/questions/25690496/how-does-pdf-line-width-interact-with-the-ctm-in-both-horizontal-and-vertical-di
+                CurrentPath.LineWidth = currentState.LineWidth * (decimal)currentState.CurrentTransformationMatrix.A; // TODO - a guess but works, to put in ContentStreamProcessor
                 CurrentPath.LineCapStyle = currentState.CapStyle;
                 CurrentPath.LineJoinStyle = currentState.JoinStyle;
             }
@@ -588,23 +573,6 @@
             }
 
             DrawPath(CurrentPath);
-
-            /*
-            if (clipPaths)
-            {
-                var clippedPath = currentState.CurrentClippingPath.Clip(CurrentPath, log);
-                if (clippedPath != null)
-                {
-                    paths.Add(clippedPath);
-                    markedContentStack.AddPath(clippedPath);
-                }
-            }
-            else
-            {
-                paths.Add(CurrentPath);
-                markedContentStack.AddPath(CurrentPath);
-            }
-            */
 
             CurrentPath = null;
         }
@@ -620,9 +588,6 @@
             AddCurrentSubpath();
             CurrentPath.SetClipping(clippingRule);
 
-            //var currentClipping = GetCurrentState().CurrentClippingPath;
-            //currentClipping.SetClipping(clippingRule);
-
             var newClippings = CurrentPath.Clip(GetCurrentState().CurrentClippingPath, log);
             if (newClippings == null)
             {
@@ -633,23 +598,6 @@
                 GetCurrentState().CurrentClippingPath = newClippings;
                 UpdateClipPath();
             }
-
-            /*
-            if (clipPaths)
-            {
-                var currentClipping = GetCurrentState().CurrentClippingPath;
-                currentClipping.SetClipping(clippingRule);
-                var newClippings = CurrentPath.Clip(currentClipping, log);
-                if (newClippings == null)
-                {
-                    log.Warn("Empty clipping path found. Clipping path not updated.");
-                }
-                else
-                {
-                    GetCurrentState().CurrentClippingPath = newClippings;
-                }
-            }
-            */
         }
 
         /// <inheritdoc/>
@@ -933,10 +881,7 @@
         private void AdjustTextMatrix(double tx, double ty)
         {
             var matrix = TransformationMatrix.GetTranslationMatrix(tx, ty);
-
-            var newMatrix = matrix.Multiply(TextMatrices.TextMatrix);
-
-            TextMatrices.TextMatrix = newMatrix;
+            TextMatrices.TextMatrix = matrix.Multiply(TextMatrices.TextMatrix);
         }
 
         /// <inheritdoc/>

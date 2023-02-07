@@ -36,6 +36,8 @@ namespace UglyToad.PdfPig.SystemDrawing.Tests
         private const string Layer_pdf_322_High_Holborn_building_Brochure = "Layer pdf - 322_High_Holborn_building_Brochure.pdf";
         private const string SPARC_v9_Architecture_Manual = "SPARC - v9 Architecture Manual.pdf";
 
+        private const string Baring_Amy_Tay_Finance_Manager_1 = "Baring_Amy.Tay_Finance.Manager-1.pdf";
+
         private static string GetFilename(string name)
         {
             var documentFolder = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Documents"));
@@ -46,6 +48,18 @@ namespace UglyToad.PdfPig.SystemDrawing.Tests
             }
 
             return Path.Combine(documentFolder, name);
+        }
+
+        [Fact]
+        public void Baring_Amy_Tay_Finance_Manager_1Test()
+        {
+            Run(Baring_Amy_Tay_Finance_Manager_1, 1);
+        }
+
+        [Fact]
+        public void Baring_Amy_Tay_Finance_Manager_1Test2()
+        {
+            Run(Baring_Amy_Tay_Finance_Manager_1, 2);
         }
 
         [Fact]

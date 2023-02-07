@@ -77,23 +77,25 @@
                     try
                     {
                         _graphics.DrawImage(Image.FromStream(new MemoryStream(bytes.ToArray())), upperLeft.X, upperLeft.Y, (float)(image.Bounds.Width * _mult), (float)(image.Bounds.Height * _mult));
-                        return;
+                        //return;
                     }
                     catch (Exception)
                     { }
                 }
-
-                try
+                else
                 {
-                    _graphics.DrawImage(Image.FromStream(new MemoryStream(image.RawBytes.ToArray())), upperLeft.X, upperLeft.Y, (float)(image.Bounds.Width * _mult), (float)(image.Bounds.Height * _mult));
-                }
-                catch (Exception)
-                {
+                    try
+                    {
+                        _graphics.DrawImage(Image.FromStream(new MemoryStream(image.RawBytes.ToArray())), upperLeft.X, upperLeft.Y, (float)(image.Bounds.Width * _mult), (float)(image.Bounds.Height * _mult));
+                    }
+                    catch (Exception)
+                    {
 #if DEBUG
-                    RectangleF rect = new RectangleF(upperLeft.X, upperLeft.Y, (float)(image.Bounds.Width * _mult), (float)(image.Bounds.Height * _mult));
-                    SolidBrush solidBrush = new SolidBrush(Color.FromArgb(60, Color.HotPink));
-                    _graphics.FillRectangle(solidBrush, rect);
+                        RectangleF rect = new RectangleF(upperLeft.X, upperLeft.Y, (float)(image.Bounds.Width * _mult), (float)(image.Bounds.Height * _mult));
+                        SolidBrush solidBrush = new SolidBrush(Color.FromArgb(60, Color.HotPink));
+                        _graphics.FillRectangle(solidBrush, rect);
 #endif
+                    }
                 }
             }
             _graphics.ResetTransform();
@@ -145,6 +147,7 @@
             }
 
             var fillBrush = Brushes.Black;
+
             if (color != null)
             {
                 fillBrush = new SolidBrush(color.ToSystemColor());
@@ -157,11 +160,11 @@
             double width, double fontSize, FontDetails font, IColor color, double pointSize)
         {
             var upperLeft = glyphRectangle.TopLeft.ToPointF(_height, _mult);
-
+            var baseLine = startBaseLine.ToPointF(_height, _mult);
             if (glyphRectangle.Rotation != 0)
             {
                 var mat = new Matrix();
-                mat.RotateAt((float)-glyphRectangle.Rotation, upperLeft);
+                mat.RotateAt((float)-glyphRectangle.Rotation, baseLine);
                 _graphics.MultiplyTransform(mat);
             }
 
@@ -177,7 +180,7 @@
 
             System.Diagnostics.Debug.WriteLine($"DrawLetter: '{font.Name}'\t{fontSize} -> Font name used: '{drawFont.Name}'");
 
-            _graphics.DrawString(value, drawFont, new SolidBrush(color.ToSystemColor()), startBaseLine.ToPointF(_height, _mult));
+            _graphics.DrawString(value, drawFont, new SolidBrush(color.ToSystemColor()), baseLine);
 
             _graphics.ResetTransform();
         }
@@ -207,7 +210,7 @@
 
             if (path.IsStroked)
             {
-                var lineWidth = (float)((double)path.LineWidth * _mult);
+                float lineWidth = Math.Max((float)0.5, (float)((double)path.LineWidth)) * (float)_mult; // A guess
 
                 var pen = new Pen(path.StrokeColor.ToSystemColor(), lineWidth);
                 switch (path.LineJoinStyle)
@@ -248,13 +251,12 @@
 
                 if (path.LineDashPattern.HasValue)
                 {
-                    /*
-                     * https://docs.microsoft.com/en-us/dotnet/api/system.drawing.pen.dashpattern?view=dotnet-plat-ext-3.1
-                     * The elements in the dashArray array set the length of each dash and space in the dash pattern. 
-                     * The first element sets the length of a dash, the second element sets the length of a space, the
-                     * third element sets the length of a dash, and so on. Consequently, each element should be a 
-                     * non-zero positive number.
-                     */
+                    //* https://docs.microsoft.com/en-us/dotnet/api/system.drawing.pen.dashpattern?view=dotnet-plat-ext-3.1
+                    //* The elements in the dashArray array set the length of each dash and space in the dash pattern. 
+                    //* The first element sets the length of a dash, the second element sets the length of a space, the
+                    //* third element sets the length of a dash, and so on. Consequently, each element should be a 
+                    //* non-zero positive number.
+
                     if (path.LineDashPattern.Value.Array.Count == 1)
                     {
                         List<float> pattern = new List<float>();
@@ -287,6 +289,7 @@
                 _graphics.DrawPath(pen, gp);
             }
         }
+
         private int ToInt(double value)
         {
             return (int)Math.Ceiling(value * _mult);
