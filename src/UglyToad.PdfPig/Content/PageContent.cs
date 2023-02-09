@@ -7,6 +7,7 @@
     using System;
     using System.Collections.Generic;
     using Tokenization.Scanner;
+    using UglyToad.PdfPig.Geometry;
     using UglyToad.PdfPig.Parser;
     using XObjects;
 
@@ -21,10 +22,13 @@
     {
         private readonly IReadOnlyList<Union<XObjectContentRecord, InlineImage>> images;
         private readonly IReadOnlyList<MarkedContentElement> markedContents;
+
         internal readonly IPdfTokenScanner pdfScanner;
         internal readonly IPageContentParser pageContentParser;
         internal readonly ILookupFilterProvider filterProvider;
         internal readonly IResourceStore resourceStore;
+        internal readonly UserSpaceUnit userSpaceUnit;
+        internal readonly InternalParsingOptions internalParsingOptions;
 
         internal IReadOnlyList<IGraphicsStateOperation> GraphicsStateOperations { get; }
 
@@ -34,14 +38,17 @@
 
         public int NumberOfImages => images.Count;
 
-        internal PageContent(IReadOnlyList<IGraphicsStateOperation> graphicsStateOperations, IReadOnlyList<Letter> letters,
+        internal PageContent(IReadOnlyList<IGraphicsStateOperation> graphicsStateOperations,
+            IReadOnlyList<Letter> letters,
             IReadOnlyList<PdfPath> paths,
             IReadOnlyList<Union<XObjectContentRecord, InlineImage>> images,
             IReadOnlyList<MarkedContentElement> markedContents,
             IPdfTokenScanner pdfScanner,
             IPageContentParser pageContentParser,
             ILookupFilterProvider filterProvider,
-            IResourceStore resourceStore)
+            IResourceStore resourceStore,
+            UserSpaceUnit userSpaceUnit,
+            InternalParsingOptions internalParsingOptions)
         {
             GraphicsStateOperations = graphicsStateOperations;
             Letters = letters;
@@ -52,6 +59,8 @@
             this.pageContentParser = pageContentParser ?? throw new ArgumentNullException(nameof(pageContentParser));
             this.filterProvider = filterProvider ?? throw new ArgumentNullException(nameof(filterProvider));
             this.resourceStore = resourceStore ?? throw new ArgumentNullException(nameof(resourceStore));
+            this.userSpaceUnit = userSpaceUnit;
+            this.internalParsingOptions = internalParsingOptions ?? throw new ArgumentNullException(nameof(internalParsingOptions));
         }
 
         public IEnumerable<IPdfImage> GetImages()

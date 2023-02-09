@@ -8,20 +8,41 @@
     using Util.JetBrains.Annotations;
     using XObjects;
 
-    internal class XObjectContentRecord
+    /// <summary>
+    /// TODO
+    /// </summary>
+    public class XObjectContentRecord
     {
+        /// <summary>
+        /// TODO
+        /// </summary>
         public XObjectType Type { get; }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         [NotNull]
         public StreamToken Stream { get; }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         public TransformationMatrix AppliedTransformation { get; }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         public RenderingIntent DefaultRenderingIntent { get; }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         public ColorSpace DefaultColorSpace { get; }
 
-        public XObjectContentRecord(XObjectType type, StreamToken stream, TransformationMatrix appliedTransformation,
+        /// <summary>
+        /// TODO
+        /// </summary>
+        internal XObjectContentRecord(XObjectType type, StreamToken stream, TransformationMatrix appliedTransformation,
             RenderingIntent defaultRenderingIntent,
             ColorSpace defaultColorSpace)
         {

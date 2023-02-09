@@ -1,8 +1,13 @@
-namespace UglyToad.PdfPig.SkiaSharp.Tests
+﻿namespace UglyToad.PdfPig.SkiaSharp.Tests
 {
     using global::SkiaSharp;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
 
-    public class ExportToImage
+    public class ExportToImage2
     {
         private const int mult = 5;
 
@@ -247,19 +252,22 @@ namespace UglyToad.PdfPig.SkiaSharp.Tests
 
         public static void Run(string file, int pageNo)
         {
-            if (!Directory.Exists("Images"))
+            const string directory = "Images2";
+            if (!Directory.Exists(directory))
             {
-                Directory.CreateDirectory("Images");
+                Directory.CreateDirectory(directory);
             }
 
             var imageName = $"{file}_{pageNo}_system-drawing.jpg";
-            var savePath = Path.Combine("Images", imageName);
+            var savePath = Path.Combine(directory, imageName);
 
             var pdfFileName = GetFilename(file);
             using (var doc = PdfDocument.Open(pdfFileName))
             {
                 var page = doc.GetPage(pageNo);
-                using (var ms = page.ToImage(mult, new SkiaSharpProcessor()))
+
+                SkiaSharpProcessor2 skiaSharpProcessor2 = new SkiaSharpProcessor2(page);
+                using (var ms = skiaSharpProcessor2.GetImage(mult))
                 using (Stream s = new FileStream(savePath, FileMode.Create))
                 {
                     var bitmap = SKBitmap.Decode(ms);

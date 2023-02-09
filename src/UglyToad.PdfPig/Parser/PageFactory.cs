@@ -100,7 +100,9 @@
                     pdfScanner,
                     pageContentParser,
                     filterProvider,
-                    resourceStore);
+                    resourceStore,
+                    userSpaceUnit,
+                    parsingOptions);
                 // ignored for now, is it possible? check the spec...
             }
             else if (DirectObjectFinder.TryGet<ArrayToken>(contents, pdfScanner, out var array))
@@ -152,7 +154,7 @@
                 pdfScanner);
 
             /*
-             * deactivated for image rendering
+            // deactivated for image rendering
             for (var i = 0; i < stackDepth; i++)
             {
                 resourceStore.UnloadResourceDictionary();

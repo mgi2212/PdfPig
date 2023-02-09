@@ -29,7 +29,7 @@
                 Count = numberOfDiscoveredPages.Value;
             }
         }
-        
+
         public Page GetPage(int pageNumber, InternalParsingOptions parsingOptions)
         {
             if (pageNumber <= 0 || pageNumber > Count)

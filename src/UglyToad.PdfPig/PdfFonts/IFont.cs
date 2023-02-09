@@ -4,20 +4,44 @@
     using System.Collections.Generic;
     using Tokens;
 
-    internal interface IFont
+    /// <summary>
+    /// TODO
+    /// </summary>
+    public interface IFont
     {
+        /// <summary>
+        /// TODO
+        /// </summary>
         NameToken Name { get; }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         bool IsVertical { get; }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         FontDetails Details { get; }
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         int ReadCharacterCode(IInputBytes bytes, out int codeLength);
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         bool TryGetUnicode(int characterCode, out string value);
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         CharacterBoundingBox GetBoundingBox(int characterCode);
 
+        /// <summary>
+        /// TODO
+        /// </summary>
         TransformationMatrix GetFontMatrix();
 
         /// <summary>

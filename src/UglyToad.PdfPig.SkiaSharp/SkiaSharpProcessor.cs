@@ -127,7 +127,8 @@
             }
         }
 
-        public override void DrawLetter(IReadOnlyList<PdfSubpath> pdfSubpaths, IColor color, TransformationMatrix renderingMatrix, TransformationMatrix textMatrix, TransformationMatrix transformationMatrix)
+        public override void DrawLetter(IReadOnlyList<PdfSubpath> pdfSubpaths, IColor color,
+            TransformationMatrix renderingMatrix, TransformationMatrix textMatrix, TransformationMatrix transformationMatrix)
         {
             if (pdfSubpaths == null)
             {
@@ -251,7 +252,7 @@
             {
                 if (path.IsStroked)
                 {
-                    float lineWidth = Math.Max((float)0.5, (float)((double)path.LineWidth)) * (float)_mult; // A guess
+                    float lineWidth = Math.Max((float)0.5, (float)path.LineWidth) * (float)_mult; // A guess
 
                     paint.Color = path.StrokeColor.ToSystemColor();
                     paint.Style = SKPaintStyle.Stroke;

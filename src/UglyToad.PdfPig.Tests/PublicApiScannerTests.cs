@@ -39,6 +39,9 @@
 
             var expected = new List<string>
             {
+                "UglyToad.PdfPig.BaseDrawingProcessor", // TODO - TO REMOVE
+                "UglyToad.PdfPig.IDrawingProcessor",    // TODO - TO REMOVE
+
                 "UglyToad.PdfPig.AcroForms.AcroForm",
                 "UglyToad.PdfPig.AcroForms.SignatureFlags",
                 "UglyToad.PdfPig.AcroForms.Fields.AcroButtonFieldFlags",
@@ -96,9 +99,11 @@
                 "UglyToad.PdfPig.PdfFonts.FontDetails",
                 "UglyToad.PdfPig.PdfFonts.FontStretch",
                 "UglyToad.PdfPig.Geometry.GeometryExtensions",
+                "UglyToad.PdfPig.Graphics.BaseStreamProcessor",
                 "UglyToad.PdfPig.Graphics.Colors.CMYKColor",
                 "UglyToad.PdfPig.Graphics.Colors.ColorSpace",
                 "UglyToad.PdfPig.Graphics.PdfPath",
+                "UglyToad.PdfPig.Graphics.Colors.AlphaColor",
                 "UglyToad.PdfPig.Graphics.Colors.ColorSpaceExtensions",
                 "UglyToad.PdfPig.Graphics.Colors.ColorSpaceFamily",
                 "UglyToad.PdfPig.Graphics.Colors.GrayColor",
