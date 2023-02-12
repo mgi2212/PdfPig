@@ -2,6 +2,7 @@
 {
     using System;
     using System.IO;
+    using UglyToad.PdfPig.Annotations;
     using UglyToad.PdfPig.Content;
     using UglyToad.PdfPig.Core;
     using UglyToad.PdfPig.Filters;
@@ -35,6 +36,79 @@
         /// <summary>
         /// TODO
         /// </summary>
+        /// <param name="scale"></param>
+        /// <returns></returns>
+        public abstract MemoryStream GetImage(double scale);
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="annotation"></param>
+        /// <returns></returns>
+        protected static DictionaryToken GetAppearance(Annotation annotation)
+        {
+            if (annotation.AnnotationDictionary.TryGet<DictionaryToken>(NameToken.Ap, out var appearance))
+            {
+                return appearance;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// todo
+        /// </summary>
+        /// <param name="annotation"></param>
+        /// <returns></returns>
+        protected DictionaryToken GetNormalAppearance(Annotation annotation)
+        {
+            var dict = GetAppearance(annotation);
+
+            if (dict == null)
+            {
+                return null;
+            }
+
+            // get Normal Appearance
+            if (!dict.Data.TryGetValue(NameToken.N, out var data))
+            {
+                return null;
+            }
+
+            if (data is IndirectReferenceToken irt)
+            {
+                data = Get(irt);
+                if (data is null)
+                {
+                    return null;
+                }
+            }
+
+            if (data is StreamToken streamToken)
+            {
+                return streamToken.StreamDictionary;
+            }
+            else if (data is DictionaryToken dictionaryToken)
+            {
+                return dictionaryToken;
+            }
+            else if (data is ObjectToken objectToken)
+            {
+                if (objectToken.Data is StreamToken streamToken2)
+                {
+                    return streamToken2.StreamDictionary;
+                }
+                else if (objectToken.Data is DictionaryToken dictionaryToken2)
+                {
+                    return dictionaryToken2;
+                }
+            }
+
+            throw new ArgumentException();
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
         /// <param name="xObjectContentRecord"></param>
         /// <returns></returns>
         protected IPdfImage GetImageFromXObject(XObjectContentRecord xObjectContentRecord)
@@ -48,10 +122,9 @@
         /// <param name="nameToken"></param>
         /// <returns></returns>
         /// <exception cref="System.Exception"></exception>
-        protected IToken TryGet(IndirectReferenceToken nameToken)
+        protected IToken Get(IndirectReferenceToken nameToken)
         {
-            var test = base.pdfScanner.Get(nameToken.Data);
-            throw new NotImplementedException();
+            return base.pdfScanner.Get(nameToken.Data);
         }
 
         /// <summary>
