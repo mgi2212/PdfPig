@@ -61,7 +61,7 @@
 
         public override void DrawImage(IPdfImage image)
         {
-            var upperLeft = image.Bounds.TopLeft.ToPointF(_height, _mult);
+            var upperLeft = image.Bounds.TopLeft.ToSKPoint(_height, _mult);
             var destRect = new SKRect(upperLeft.X, upperLeft.Y,
                              upperLeft.X + (float)(image.Bounds.Width * _mult),
                              upperLeft.Y + (float)(image.Bounds.Height * _mult));
@@ -187,7 +187,7 @@
         public override void DrawLetter(string value, PdfRectangle glyphRectangle, PdfPoint startBaseLine, PdfPoint endBaseLine,
             double width, double fontSize, FontDetails font, IColor color, double pointSize)
         {
-            var baseLine = startBaseLine.ToPointF(_height, _mult);
+            var baseLine = startBaseLine.ToSKPoint(_height, _mult);
             if (glyphRectangle.Rotation != 0)
             {
                 _canvas.RotateDegrees((float)-glyphRectangle.Rotation, baseLine.X, baseLine.Y);
@@ -196,8 +196,8 @@
 #if DEBUG
             var glyphRectangleNormalise = glyphRectangle.Normalise();
 
-            var upperLeftNorm = glyphRectangleNormalise.TopLeft.ToPointF(_height, _mult);
-            var bottomLeftNorm = glyphRectangleNormalise.BottomLeft.ToPointF(_height, _mult);
+            var upperLeftNorm = glyphRectangleNormalise.TopLeft.ToSKPoint(_height, _mult);
+            var bottomLeftNorm = glyphRectangleNormalise.BottomLeft.ToSKPoint(_height, _mult);
             SKRect rect = new SKRect(upperLeftNorm.X, upperLeftNorm.Y,
                 upperLeftNorm.X + (float)(glyphRectangleNormalise.Width * _mult),
                 upperLeftNorm.Y + (float)(glyphRectangleNormalise.Height * _mult));

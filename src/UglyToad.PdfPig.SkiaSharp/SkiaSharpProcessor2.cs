@@ -98,14 +98,25 @@
                 // Get appearance
                 PdfRectangle rect = annotation.Rectangle;
 
-                var appearance = base.GetNormalAppearance(annotation);
+                var appearance = base.GetNormalAppearanceAsStream(annotation);
+
+                //StreamToken streamToken = new StreamToken()
 
                 /*
+                if (appearance != null)
+                {
+                    base.ProcessFormXObject(appearance);
+                }
+                */
+
+                //DebugDrawRect(rect);
+
+                
                 PdfRectangle? bbox = null;
-                var appearance = base.GetNormalAppearance(annotation);
+                //var appearance = base.GetNormalAppearance(annotation);
                 if (appearance is not null)
                 {
-                    if (appearance.TryGet<ArrayToken>(NameToken.Bbox, out var bboxToken))
+                    if (appearance.StreamDictionary.TryGet<ArrayToken>(NameToken.Bbox, out var bboxToken))
                     {
                         var points = bboxToken.Data.OfType<NumericToken>().Select(x => x.Double).ToArray();
                         bbox = new PdfRectangle(points[0], points[1], points[2], points[3]);
@@ -115,7 +126,7 @@
                     if (rect.Width > 0 && rect.Height > 0 &&
                         bbox.HasValue && bbox.Value.Width > 0 && bbox.Value.Height > 0)
                     {
-                        if (appearance.TryGet<ArrayToken>(NameToken.Matrix, out var matrixToken))
+                        if (appearance.StreamDictionary.TryGet<ArrayToken>(NameToken.Matrix, out var matrixToken))
                         {
                             var matrix = TransformationMatrix.FromArray(matrixToken.Data.OfType<NumericToken>().Select(x => x.Double).ToArray());
 
@@ -126,9 +137,7 @@
                             // Matrix a = Matrix.getTranslateInstance(rect.getLowerLeftX(), rect.getLowerLeftY());
                             TransformationMatrix a = TransformationMatrix.GetTranslationMatrix(rect.BottomLeft.X, rect.BottomLeft.Y);
 
-                            //    a.scale((float)(rect.getWidth() / transformedBox.getWidth()),
-                            //(float)(rect.getHeight() / transformedBox.getHeight()));
-                            // TODO
+                            scale(a, (float)(rect.Width / transformedBox.Width), (float)(rect.Height / transformedBox.Height));
 
                             //   a.translate((float) -transformedBox.getX(), (float) -transformedBox.getY());
                             a = a.Translate(-transformedBox.TopLeft.X, -transformedBox.TopLeft.Y);
@@ -139,44 +148,52 @@
                             // HOWEVER only the opposite order works for rotated pages with 
                             // filled fields / annotations that have a matrix in the appearance stream, see PDFBOX-3083
                             //Matrix aa = Matrix.concatenate(a, matrix);
-
+                            TransformationMatrix aa = a.Multiply(matrix);
 
                             // FOR DEBUG
                             //rect = a.Transform(rect);
                             //DebugDrawRect(a.Transform(transformedBox));
+
+                            GetCurrentState().CurrentTransformationMatrix = aa;
+
+                            base.ProcessFormXObject(appearance);
                         }
 
                     }
                 }
-                */
+                
 
-                DebugDrawRect(rect);
             }
         }
 
-        static SKMatrix Multiply(SKMatrix first, SKMatrix second)
+        public void scale(TransformationMatrix matrix, float sx, float sy)
         {
-            //https://learn.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/effects
-            SKMatrix target = SKMatrix.MakeIdentity();
-            SKMatrix.Concat(ref target, first, second);
-            return target;
+            /*
+            matrix[0] *= sx;
+            single[1] *= sx;
+            single[2] *= sx;
+            single[3] *= sy;
+            single[4] *= sy;
+            single[5] *= sy;
+            checkFloatValues(single);
+            */
         }
 
         private void DebugDrawRect(PdfRectangle rect)
         {
-            var upperLeft = rect.TopLeft.ToPointF(_height, _mult);
+            var upperLeft = rect.TopLeft.ToSKPoint(_height, _mult);
             var destRect = new SKRect(upperLeft.X, upperLeft.Y,
                              upperLeft.X + (float)(rect.Width * _mult),
                              upperLeft.Y + (float)(rect.Height * _mult));
 
             // https://learn.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/effects
             SKPathEffect diagLinesPath = SKPathEffect.Create2DLine(4 * (float)_mult,
-                Multiply(SKMatrix.CreateScale(36, 36), SKMatrix.CreateRotationDegrees(45)));
+                SKMatrix.Concat(SKMatrix.CreateScale(6 * (float)_mult, 6 * (float)_mult), SKMatrix.CreateRotationDegrees(45)));
 
-            SKPaint fillBrush = new SKPaint()
+            var fillBrush = new SKPaint()
             {
                 Style = SKPaintStyle.Fill,
-                Color = new SKColor(SKColors.Aqua.Red, SKColors.Aqua.Green, SKColors.Aqua.Blue),
+                Color = new SKColor(SKColors.Aqua.Red, SKColors.Aqua.Green, SKColors.Aqua.Blue, 100),
                 PathEffect = diagLinesPath,
             };
             _canvas.DrawRect(destRect, fillBrush);
@@ -189,6 +206,7 @@
             };
             _canvas.DrawRect(destRect, fillBrush);
 
+            diagLinesPath.Dispose();
             fillBrush.Dispose();
         }
 
@@ -269,7 +287,7 @@
             var transformedPdfBounds = PerformantRectangleTransformer
                 .Transform(renderingMatrix, textMatrix, transformationMatrix, new PdfRectangle(0, 0, characterBoundingBox.Width, 0));
 
-            var startBaseLine = transformedPdfBounds.BottomLeft.ToPointF(_height, _mult);
+            var startBaseLine = transformedPdfBounds.BottomLeft.ToSKPoint(_height, _mult);
             if (transformedGlyphBounds.Rotation != 0)
             {
                 _canvas.RotateDegrees((float)-transformedGlyphBounds.Rotation, startBaseLine.X, startBaseLine.Y);
@@ -278,8 +296,8 @@
 #if DEBUG
             var glyphRectangleNormalise = transformedGlyphBounds.Normalise();
 
-            var upperLeftNorm = glyphRectangleNormalise.TopLeft.ToPointF(_height, _mult);
-            var bottomLeftNorm = glyphRectangleNormalise.BottomLeft.ToPointF(_height, _mult);
+            var upperLeftNorm = glyphRectangleNormalise.TopLeft.ToSKPoint(_height, _mult);
+            var bottomLeftNorm = glyphRectangleNormalise.BottomLeft.ToSKPoint(_height, _mult);
             SKRect rect = new SKRect(upperLeftNorm.X, upperLeftNorm.Y,
                 upperLeftNorm.X + (float)(glyphRectangleNormalise.Width * _mult),
                 upperLeftNorm.Y + (float)(glyphRectangleNormalise.Height * _mult));
@@ -612,7 +630,7 @@
 
         private void DrawImage(IPdfImage image)
         {
-            var upperLeft = image.Bounds.TopLeft.ToPointF(_height, _mult);
+            var upperLeft = image.Bounds.TopLeft.ToSKPoint(_height, _mult);
             var destRect = new SKRect(upperLeft.X, upperLeft.Y,
                              upperLeft.X + (float)(image.Bounds.Width * _mult),
                              upperLeft.Y + (float)(image.Bounds.Height * _mult));

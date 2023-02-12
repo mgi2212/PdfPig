@@ -59,6 +59,58 @@
         /// </summary>
         /// <param name="annotation"></param>
         /// <returns></returns>
+        protected StreamToken GetNormalAppearanceAsStream(Annotation annotation)
+        {
+            var dict = GetAppearance(annotation);
+
+            if (dict == null)
+            {
+                return null;
+            }
+
+            // get Normal Appearance
+            if (!dict.Data.TryGetValue(NameToken.N, out var data))
+            {
+                return null;
+            }
+
+            if (data is IndirectReferenceToken irt)
+            {
+                data = Get(irt);
+                if (data is null)
+                {
+                    return null;
+                }
+            }
+
+            if (data is StreamToken streamToken)
+            {
+                return streamToken;
+            }
+            else if (data is DictionaryToken dictionaryToken)
+            {
+                return null; //return dictionaryToken;
+            }
+            else if (data is ObjectToken objectToken)
+            {
+                if (objectToken.Data is StreamToken streamToken2)
+                {
+                    return streamToken2;
+                }
+                else if (objectToken.Data is DictionaryToken dictionaryToken2)
+                {
+                    return null;  //return dictionaryToken2;
+                }
+            }
+
+            throw new ArgumentException();
+        }
+
+        /// <summary>
+        /// todo
+        /// </summary>
+        /// <param name="annotation"></param>
+        /// <returns></returns>
         protected DictionaryToken GetNormalAppearance(Annotation annotation)
         {
             var dict = GetAppearance(annotation);

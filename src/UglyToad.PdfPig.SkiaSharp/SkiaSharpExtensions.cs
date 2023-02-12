@@ -26,17 +26,17 @@
                 {
                     if (c is Move move)
                     {
-                        gp.MoveTo(move.Location.ToPointF(height, scale));
+                        gp.MoveTo(move.Location.ToSKPoint(height, scale));
                     }
                     else if (c is Line line)
                     {
-                        gp.LineTo(line.To.ToPointF(height, scale));
+                        gp.LineTo(line.To.ToSKPoint(height, scale));
                     }
                     else if (c is BezierCurve curve)
                     {
-                        gp.CubicTo(curve.FirstControlPoint.ToPointF(height, scale),
-                            curve.SecondControlPoint.ToPointF(height, scale),
-                            curve.EndPoint.ToPointF(height, scale));
+                        gp.CubicTo(curve.FirstControlPoint.ToSKPoint(height, scale),
+                            curve.SecondControlPoint.ToSKPoint(height, scale),
+                            curve.EndPoint.ToSKPoint(height, scale));
                     }
                     else if (c is Close)
                     {
@@ -47,7 +47,7 @@
             return gp;
         }
 
-        public static SKPoint ToPointF(this PdfPoint pdfPoint, int height, double scale)
+        public static SKPoint ToSKPoint(this PdfPoint pdfPoint, int height, double scale)
         {
             return new SKPoint((float)(pdfPoint.X * scale), (float)(height - pdfPoint.Y * scale));
         }
