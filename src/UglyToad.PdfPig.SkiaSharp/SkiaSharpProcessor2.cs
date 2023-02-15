@@ -3,20 +3,19 @@
     using global::SkiaSharp;
     using System;
     using System.Collections.Generic;
-    using System.Drawing;
     using System.IO;
     using System.Linq;
     using UglyToad.PdfPig.Content;
     using UglyToad.PdfPig.Core;
+    using UglyToad.PdfPig.Fonts.Standard14Fonts;
+    using UglyToad.PdfPig.Fonts.SystemFonts;
     using UglyToad.PdfPig.Geometry;
     using UglyToad.PdfPig.Graphics;
     using UglyToad.PdfPig.Graphics.Colors;
     using UglyToad.PdfPig.Graphics.Operations;
     using UglyToad.PdfPig.PdfFonts;
     using UglyToad.PdfPig.Rendering;
-    using UglyToad.PdfPig.Tokenization.Scanner;
     using UglyToad.PdfPig.Tokens;
-    using static System.Net.Mime.MediaTypeNames;
     using static UglyToad.PdfPig.Core.PdfSubpath;
 
     public class SkiaSharpProcessor2 : BaseRenderStreamProcessor
@@ -96,24 +95,13 @@
                 // Check if visible
 
                 // Get appearance
-                PdfRectangle rect = annotation.Rectangle;
-
                 var appearance = base.GetNormalAppearanceAsStream(annotation);
 
-                //StreamToken streamToken = new StreamToken()
+                //DebugDrawRect(annotation.Rectangle);
 
-                /*
-                if (appearance != null)
-                {
-                    base.ProcessFormXObject(appearance);
-                }
-                */
-
-                //DebugDrawRect(rect);
-
-                
                 PdfRectangle? bbox = null;
-                //var appearance = base.GetNormalAppearance(annotation);
+                PdfRectangle? rect = annotation.Rectangle;
+
                 if (appearance is not null)
                 {
                     if (appearance.StreamDictionary.TryGet<ArrayToken>(NameToken.Bbox, out var bboxToken))
@@ -122,104 +110,128 @@
                         bbox = new PdfRectangle(points[0], points[1], points[2], points[3]);
                     }
 
+                    /*
+                    if (annotation.AnnotationDictionary.TryGet<ArrayToken>(NameToken.Rect, out var rectToken))
+                    {
+                        var points = rectToken.Data.OfType<NumericToken>().Select(x => x.Double).ToArray();
+                        rect = new PdfRectangle(points[0], points[1], points[2], points[3]);
+                    }
+                    */
                     // zero-sized rectangles are not valid
-                    if (rect.Width > 0 && rect.Height > 0 &&
+                    if (rect.HasValue && rect.Value.Width > 0 && rect.Value.Height > 0 &&
                         bbox.HasValue && bbox.Value.Width > 0 && bbox.Value.Height > 0)
                     {
+                        var matrix = TransformationMatrix.Identity;
                         if (appearance.StreamDictionary.TryGet<ArrayToken>(NameToken.Matrix, out var matrixToken))
                         {
-                            var matrix = TransformationMatrix.FromArray(matrixToken.Data.OfType<NumericToken>().Select(x => x.Double).ToArray());
-
-                            // transformed appearance box  fixme: may be an arbitrary shape
-                            //Rectangle2D transformedBox = bbox.transform(matrix).getBounds2D();
-                            PdfRectangle transformedBox = matrix.Transform(bbox.Value); //.getBounds2D();
-
-                            // Matrix a = Matrix.getTranslateInstance(rect.getLowerLeftX(), rect.getLowerLeftY());
-                            TransformationMatrix a = TransformationMatrix.GetTranslationMatrix(rect.BottomLeft.X, rect.BottomLeft.Y);
-
-                            scale(a, (float)(rect.Width / transformedBox.Width), (float)(rect.Height / transformedBox.Height));
-
-                            //   a.translate((float) -transformedBox.getX(), (float) -transformedBox.getY());
-                            a = a.Translate(-transformedBox.TopLeft.X, -transformedBox.TopLeft.Y);
-
-                            // Matrix shall be concatenated with A to form a matrix AA that maps from the appearance's
-                            // coordinate system to the annotation's rectangle in default user space
-                            //
-                            // HOWEVER only the opposite order works for rotated pages with 
-                            // filled fields / annotations that have a matrix in the appearance stream, see PDFBOX-3083
-                            //Matrix aa = Matrix.concatenate(a, matrix);
-                            TransformationMatrix aa = a.Multiply(matrix);
-
-                            // FOR DEBUG
-                            //rect = a.Transform(rect);
-                            //DebugDrawRect(a.Transform(transformedBox));
-
-                            GetCurrentState().CurrentTransformationMatrix = aa;
-
-                            base.ProcessFormXObject(appearance);
+                            matrix = TransformationMatrix.FromArray(matrixToken.Data.OfType<NumericToken>().Select(x => x.Double).ToArray());
                         }
 
+                        PushState();
+                        // transformed appearance box  fixme: may be an arbitrary shape
+                        //Rectangle2D transformedBox = bbox.transform(matrix).getBounds2D();
+                        PdfRectangle transformedBox = matrix.Transform(bbox.Value); //.getBounds2D();
+                        transformedBox = transformedBox.Normalise();
+
+                        // Matrix a = Matrix.getTranslateInstance(rect.getLowerLeftX(), rect.getLowerLeftY());
+                        TransformationMatrix a = TransformationMatrix.GetTranslationMatrix(rect.Value.TopLeft.X, rect.Value.TopLeft.Y);
+                        a = scale(a, (float)(rect.Value.Width / transformedBox.Width), (float)(rect.Value.Height / transformedBox.Height));
+                        a = a.Translate(-transformedBox.TopLeft.X, -transformedBox.TopLeft.Y);
+
+                        // Matrix shall be concatenated with A to form a matrix AA that maps from the appearance's
+                        // coordinate system to the annotation's rectangle in default user space
+                        //
+                        // HOWEVER only the opposite order works for rotated pages with 
+                        // filled fields / annotations that have a matrix in the appearance stream, see PDFBOX-3083
+                        //Matrix aa = Matrix.concatenate(a, matrix);
+                        //TransformationMatrix aa = a.Multiply(matrix);
+
+                        GetCurrentState().CurrentTransformationMatrix = a;
+
+                        // widget / acroform default colors
+                        //GetCurrentState().CurrentNonStrokingColor = DefaultFieldsHighlightColor; // does not work here
+
+                        try
+                        {
+                            base.ProcessFormXObject(appearance);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"ShowGlyph: {ex}");
+                        }
+                        finally
+                        {
+                            PopState();
+                        }
                     }
                 }
-                
-
             }
         }
 
-        public void scale(TransformationMatrix matrix, float sx, float sy)
+        public TransformationMatrix scale(TransformationMatrix matrix, float sx, float sy)
         {
-            /*
-            matrix[0] *= sx;
-            single[1] *= sx;
-            single[2] *= sx;
-            single[3] *= sy;
-            single[4] *= sy;
-            single[5] *= sy;
-            checkFloatValues(single);
-            */
+            var x0 = matrix[0, 0] * sx;
+            var x1 = matrix[0, 1] * sx;
+            var x2 = matrix[0, 2] * sx;
+            var y0 = matrix[1, 0] * sy;
+            var y1 = matrix[1, 1] * sy;
+            var y2 = matrix[1, 2] * sy;
+            return new TransformationMatrix(x0, x1, x2, y0, y1, y2, matrix[2, 0], matrix[2, 1], matrix[2, 2]);
         }
 
         private void DebugDrawRect(PdfRectangle rect)
         {
-            var upperLeft = rect.TopLeft.ToSKPoint(_height, _mult);
-            var destRect = new SKRect(upperLeft.X, upperLeft.Y,
-                             upperLeft.X + (float)(rect.Width * _mult),
-                             upperLeft.Y + (float)(rect.Height * _mult));
-
-            // https://learn.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/effects
-            SKPathEffect diagLinesPath = SKPathEffect.Create2DLine(4 * (float)_mult,
-                SKMatrix.Concat(SKMatrix.CreateScale(6 * (float)_mult, 6 * (float)_mult), SKMatrix.CreateRotationDegrees(45)));
-
-            var fillBrush = new SKPaint()
+            using (new SKAutoCanvasRestore(_canvas))
             {
-                Style = SKPaintStyle.Fill,
-                Color = new SKColor(SKColors.Aqua.Red, SKColors.Aqua.Green, SKColors.Aqua.Blue, 100),
-                PathEffect = diagLinesPath,
-            };
-            _canvas.DrawRect(destRect, fillBrush);
+                var upperLeft = rect.TopLeft.ToSKPoint(_height, _mult);
+                var destRect = new SKRect(upperLeft.X, upperLeft.Y,
+                                 upperLeft.X + (float)(rect.Width * _mult),
+                                 upperLeft.Y + (float)(rect.Height * _mult)).Standardized;
 
-            fillBrush = new SKPaint()
-            {
-                Style = SKPaintStyle.Stroke,
-                Color = SKColors.Red,
-                StrokeWidth = 5
-            };
-            _canvas.DrawRect(destRect, fillBrush);
+                //_canvas.ClipRect(destRect);
 
-            diagLinesPath.Dispose();
-            fillBrush.Dispose();
+                // https://learn.microsoft.com/en-us/xamarin/xamarin-forms/user-interface/graphics/skiasharp/curves/effects
+                SKPathEffect diagLinesPath = SKPathEffect.Create2DLine(4 * (float)_mult,
+                    SKMatrix.Concat(SKMatrix.CreateScale(6 * (float)_mult, 6 * (float)_mult), SKMatrix.CreateRotationDegrees(45)));
+
+                var fillBrush = new SKPaint()
+                {
+                    Style = SKPaintStyle.Fill,
+                    Color = new SKColor(SKColors.Aqua.Red, SKColors.Aqua.Green, SKColors.Aqua.Blue, 30),
+                    PathEffect = diagLinesPath
+                };
+                _canvas.DrawRect(destRect, fillBrush);
+
+                fillBrush = new SKPaint()
+                {
+                    Style = SKPaintStyle.Stroke,
+                    Color = new SKColor(SKColors.Red.Red, SKColors.Red.Green, SKColors.Red.Blue, 30),
+                    StrokeWidth = 5
+                };
+                _canvas.DrawRect(destRect, fillBrush);
+
+                diagLinesPath.Dispose();
+                fillBrush.Dispose();
+            }
         }
 
         public override void ShowGlyph(IFont font, IColor color, double fontSize, double pointSize, int code, string unicode, long currentOffset,
             TransformationMatrix renderingMatrix, TransformationMatrix textMatrix, TransformationMatrix transformationMatrix, CharacterBoundingBox characterBoundingBox)
         {
-            if (font.TryGetNormalisedPath(code, out var path))
+            try
             {
-                ShowVectorFontGlyph(path, color, renderingMatrix, textMatrix, transformationMatrix);
+                if (font.TryGetNormalisedPath(code, out var path))
+                {
+                    ShowVectorFontGlyph(path, color, renderingMatrix, textMatrix, transformationMatrix);
+                }
+                else
+                {
+                    ShowNonVectorFontGlyph(font, color, pointSize, unicode, renderingMatrix, textMatrix, transformationMatrix, characterBoundingBox);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                ShowNonVectorFontGlyph(font, color, pointSize, unicode, renderingMatrix, textMatrix, transformationMatrix, characterBoundingBox);
+                System.Diagnostics.Debug.WriteLine($"ShowGlyph: {ex}");
             }
         }
 
@@ -294,6 +306,7 @@
             }
 
 #if DEBUG
+            /*
             var glyphRectangleNormalise = transformedGlyphBounds.Normalise();
 
             var upperLeftNorm = glyphRectangleNormalise.TopLeft.ToSKPoint(_height, _mult);
@@ -313,9 +326,11 @@
 
             _canvas.DrawRect(rect, paint);
             paint.Dispose();
+            */
 #endif
 
             var style = SKFontStyle.Normal;
+            // TODO - Use font weight instead
             if (font.Details.IsBold && font.Details.IsItalic)
             {
                 style = SKFontStyle.BoldItalic;
@@ -329,7 +344,54 @@
                 style = SKFontStyle.Italic;
             }
 
-            var drawFont = SKTypeface.FromFamilyName(CleanFontName(font.Name), style);
+            SKTypeface? drawFont = null;
+            /*
+            if (Standard14.IsFontInStandard14(font.Name))
+            {
+                // Does not work
+                var manager = SKFontManager.CreateDefault();
+                var bytes = base.GetAfmStream(font.Name);
+                using (var streamFont = new MemoryStream(bytes))
+                {
+                    drawFont = SKTypeface.FromStream(streamFont);
+                }
+
+                using (var streamFont = new MemoryStream(bytes))
+                {
+                    streamFont.Flush();
+                    streamFont.Position = 0;
+                    drawFont = manager.CreateTypeface(streamFont);
+                }
+            }
+            */
+
+            if (drawFont is null)
+            {
+                string cleanName = CleanFontName(font.Name);
+                drawFont = SKTypeface.FromFamilyName(cleanName, style);
+
+                if (!drawFont.FamilyName.Equals(cleanName, StringComparison.OrdinalIgnoreCase) &&
+                    SystemFontFinder.NameSubstitutes.TryGetValue(font.Name, out string[]? subs) &&
+                    subs !=  null)
+                {
+                    foreach (var sub in subs)
+                    {
+                        drawFont = SKTypeface.FromFamilyName(sub, style);
+                        if (drawFont.FamilyName.Equals(sub))
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                // https://superuser.com/questions/679753/what-is-this-zapfdingbats-font-that-isnt-in-the-fonts-folder
+                if (font.Name.Data.Equals("ZapfDingbats"))
+                {
+                    // Wingdings 
+                    //drawFont = SKTypeface.FromFamilyName("Wingdings", style);
+                }
+            }
+
             var fontPaint = new SKPaint(drawFont.ToFont((float)(pointSize * _mult)))
             {
                 Color = color.ToSystemColor()
@@ -660,7 +722,6 @@
                         {
                             _canvas.DrawBitmap(bitmap, destRect);
                         }
-                        return;
                     }
                     catch (Exception)
                     {

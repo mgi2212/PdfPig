@@ -6,8 +6,10 @@
     using UglyToad.PdfPig.Content;
     using UglyToad.PdfPig.Core;
     using UglyToad.PdfPig.Filters;
+    using UglyToad.PdfPig.Fonts.Standard14Fonts;
     using UglyToad.PdfPig.Geometry;
     using UglyToad.PdfPig.Graphics;
+    using UglyToad.PdfPig.Graphics.Colors;
     using UglyToad.PdfPig.Parser;
     using UglyToad.PdfPig.Tokenization.Scanner;
     using UglyToad.PdfPig.Tokens;
@@ -18,6 +20,18 @@
     /// </summary>
     public abstract class BaseRenderStreamProcessor : BaseStreamProcessor<MemoryStream>
     {
+        /// <summary>
+        /// Default FieldsHighlightColor from Adobe Acrobat Reader.
+        /// TODO - make an option of that
+        /// </summary>
+        public static readonly IColor DefaultFieldsHighlightColor = new RGBColor((decimal)(204 / 255.0), (decimal)(215 / 255.0), 1);
+
+        /// <summary>
+        /// Default Required FieldsHighlightColor from Adobe Acrobat Reader.
+        /// TODO - make an option of that
+        /// </summary>
+        public static readonly IColor DefaultRequiredFieldsHighlightColor = new RGBColor(1, 0, 0);
+
         /// <summary>
         /// TODO
         /// </summary>
@@ -55,6 +69,34 @@
         }
 
         /// <summary>
+        /// todo (cannot be loaded by SkiaSharp)
+        /// </summary>
+        /// <param name="afmName"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        protected byte[] GetAfmStream(string afmName)
+        {
+            // UglyToad.PdfPig.Fonts.Standard14Fonts .Standard14
+            var assembly = typeof(Standard14).Assembly;
+
+            var name = $"UglyToad.PdfPig.Fonts.Resources.AdobeFontMetrics.{afmName}.afm";
+
+            //IInputBytes bytes;
+            var memory = new MemoryStream();
+            using (var resource = assembly.GetManifestResourceStream(name))
+            {
+                if (resource == null)
+                {
+                    throw new InvalidOperationException($"Could not find AFM resource with name: {name}.");
+                }
+
+                resource.CopyTo(memory);
+                return memory.ToArray();
+                //bytes = new ByteArrayInputBytes(memory.ToArray());
+            }
+        }
+
+        /// <summary>
         /// todo
         /// </summary>
         /// <param name="annotation"></param>
@@ -89,7 +131,13 @@
             }
             else if (data is DictionaryToken dictionaryToken)
             {
-                return null; //return dictionaryToken;
+                if (annotation.AnnotationDictionary.TryGet(NameToken.As, out var appearanceState))
+                {
+                    var stream = dictionaryToken.Get<StreamToken>(appearanceState as NameToken, pdfScanner);
+                    return stream;
+                }
+
+                return null;
             }
             else if (data is ObjectToken objectToken)
             {
@@ -99,7 +147,13 @@
                 }
                 else if (objectToken.Data is DictionaryToken dictionaryToken2)
                 {
-                    return null;  //return dictionaryToken2;
+                    // getAppearanceState
+                    if (annotation.AnnotationDictionary.TryGet(NameToken.As, out var appearanceState))
+                    {
+                        var stream = dictionaryToken2.Get<StreamToken>(appearanceState as NameToken, pdfScanner);
+                        return stream;
+                    }
+                    return null;
                 }
             }
 
@@ -111,7 +165,7 @@
         /// </summary>
         /// <param name="annotation"></param>
         /// <returns></returns>
-        protected DictionaryToken GetNormalAppearance(Annotation annotation)
+        protected IToken GetNormalAppearance(Annotation annotation)
         {
             var dict = GetAppearance(annotation);
 
@@ -137,7 +191,7 @@
 
             if (data is StreamToken streamToken)
             {
-                return streamToken.StreamDictionary;
+                return streamToken;
             }
             else if (data is DictionaryToken dictionaryToken)
             {
@@ -147,7 +201,7 @@
             {
                 if (objectToken.Data is StreamToken streamToken2)
                 {
-                    return streamToken2.StreamDictionary;
+                    return streamToken2;
                 }
                 else if (objectToken.Data is DictionaryToken dictionaryToken2)
                 {
