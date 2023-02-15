@@ -5,6 +5,7 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using UglyToad.PdfPig.Annotations;
     using UglyToad.PdfPig.Content;
     using UglyToad.PdfPig.Core;
     using UglyToad.PdfPig.Fonts.Standard14Fonts;
@@ -73,9 +74,11 @@
                     _canvas.DrawRect(0, 0, _width, _height, paint);
                 }
 
+                DrawAnnotations(true);
+
                 ProcessOperations(operations);
 
-                DrawAnnotations();
+                DrawAnnotations(false);
 
                 using (SKData d = bitmap.Encode(SKEncodedImageFormat.Png, 100))
                 {
@@ -86,11 +89,23 @@
             return ms;
         }
 
-        private void DrawAnnotations()
+        /// <summary>
+        /// Very hackish
+        /// </summary>
+        private static bool IsAnnotationBelowText(Annotation annotation)
+        {
+            if (annotation.Type == AnnotationType.Highlight)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        private void DrawAnnotations(bool isBelowText)
         {
             // https://github.com/apache/pdfbox/blob/trunk/pdfbox/src/main/java/org/apache/pdfbox/rendering/PageDrawer.java
             // https://github.com/apache/pdfbox/blob/c4b212ecf42a1c0a55529873b132ea338a8ba901/pdfbox/src/main/java/org/apache/pdfbox/contentstream/PDFStreamEngine.java#L312
-            foreach (var annotation in _page.ExperimentalAccess.GetAnnotations())
+            foreach (var annotation in _page.ExperimentalAccess.GetAnnotations().Where(a => IsAnnotationBelowText(a) == isBelowText))
             {
                 // Check if visible
 
@@ -110,13 +125,6 @@
                         bbox = new PdfRectangle(points[0], points[1], points[2], points[3]);
                     }
 
-                    /*
-                    if (annotation.AnnotationDictionary.TryGet<ArrayToken>(NameToken.Rect, out var rectToken))
-                    {
-                        var points = rectToken.Data.OfType<NumericToken>().Select(x => x.Double).ToArray();
-                        rect = new PdfRectangle(points[0], points[1], points[2], points[3]);
-                    }
-                    */
                     // zero-sized rectangles are not valid
                     if (rect.HasValue && rect.Value.Width > 0 && rect.Value.Height > 0 &&
                         bbox.HasValue && bbox.Value.Width > 0 && bbox.Value.Height > 0)
@@ -157,7 +165,7 @@
                         }
                         catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.WriteLine($"ShowGlyph: {ex}");
+                            System.Diagnostics.Debug.WriteLine($"DrawAnnotations: {ex}");
                         }
                         finally
                         {
@@ -429,6 +437,7 @@
 
         public override PdfPoint? CloseSubpath()
         {
+            CurrentPath.Close();
             // do nothing - to check
             return null;
         }
@@ -481,7 +490,8 @@
 
         public override void ClosePath()
         {
-            CurrentPath.Close();
+            // TODO - to check, does nothing
+            //CurrentPath.Close();
         }
 
         public override void EndPath()

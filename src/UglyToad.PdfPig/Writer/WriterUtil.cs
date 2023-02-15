@@ -10,9 +10,9 @@
     using Tokenization.Scanner;
     using Tokens;
 
-	internal static class WriterUtil
+    internal static class WriterUtil
     {
-        public static Dictionary<string, IToken> GetOrCreateDict(this Dictionary<NameToken, IToken> dict,  NameToken key)
+        public static Dictionary<string, IToken> GetOrCreateDict(this Dictionary<NameToken, IToken> dict, NameToken key)
         {
             if (dict.TryGetValue(key, out var item))
             {
@@ -37,7 +37,7 @@
             return created;
         }
 
-        public static Dictionary<string, IToken> GetOrCreateDict(this Dictionary<string, IToken> dict,  string key)
+        public static Dictionary<string, IToken> GetOrCreateDict(this Dictionary<string, IToken> dict, string key)
         {
             if (dict.TryGetValue(key, out var item))
             {
@@ -61,6 +61,7 @@
             dict[key] = DictionaryToken.With(created);
             return created;
         }
+
         /// <summary>
         /// The purpose of this method is to resolve indirect reference. That mean copy the reference's content to the new document's stream
         /// and replace the indirect reference with the correct/new one
@@ -72,7 +73,7 @@
         /// <param name="callstack">Call stack of indirect references</param>
         /// <returns>A reference of the token that was copied. With all the reference updated</returns>
         public static IToken CopyToken(IPdfStreamWriter writer, IToken tokenToCopy, IPdfTokenScanner tokenScanner,
-            IDictionary<IndirectReference, IndirectReferenceToken> referencesFromDocument, Dictionary<IndirectReference, IndirectReferenceToken> callstack=null)
+            IDictionary<IndirectReference, IndirectReferenceToken> referencesFromDocument, Dictionary<IndirectReference, IndirectReferenceToken> callstack = null)
         {
             if (callstack == null)
             {
@@ -83,7 +84,7 @@
             switch (tokenToCopy)
             {
                 case DictionaryToken dictionaryToken:
-                {
+                    {
                         var newContent = new Dictionary<NameToken, IToken>();
                         foreach (var setPair in dictionaryToken.Data)
                         {
@@ -145,7 +146,7 @@
                         return newReferenceToken;
                     }
                 case StreamToken streamToken:
-                {
+                    {
                         var properties = CopyToken(writer, streamToken.StreamDictionary, tokenScanner, referencesFromDocument, callstack) as DictionaryToken;
                         Debug.Assert(properties != null);
 
@@ -164,7 +165,7 @@
             return tokenToCopy;
         }
 
-        internal static IEnumerable<(DictionaryToken, IReadOnlyList<DictionaryToken>)> WalkTree(PageTreeNode node, List<DictionaryToken> parents=null)
+        internal static IEnumerable<(DictionaryToken, IReadOnlyList<DictionaryToken>)> WalkTree(PageTreeNode node, List<DictionaryToken> parents = null)
         {
             if (parents == null)
             {
@@ -188,6 +189,4 @@
             }
         }
     }
-
 }
-

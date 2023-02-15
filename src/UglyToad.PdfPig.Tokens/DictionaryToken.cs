@@ -36,7 +36,11 @@
             Data = result;
         }
 
-        private DictionaryToken(IReadOnlyDictionary<string, IToken> data)
+        /// <summary>
+        /// Create a new <see cref="DictionaryToken"/>.
+        /// </summary>
+        /// <param name="data">The data this dictionary will contain.</param>
+        public DictionaryToken(IReadOnlyDictionary<string, IToken> data)
         {
             Data = data;
         }

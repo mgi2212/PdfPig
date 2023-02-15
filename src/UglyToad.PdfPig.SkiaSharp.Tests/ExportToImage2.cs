@@ -45,6 +45,8 @@
 
         private const string complex_rotated = "complex rotated.pdf";
 
+        private const string cat_genetics_bobld = "cat-genetics_bobld.pdf";
+
         private static string GetFilename(string name)
         {
             var documentFolder = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Documents"));
@@ -213,6 +215,13 @@
         {
             Run(TransparentImage, 1);
         }
+
+        [Fact]
+        public void cat_geneticsTest_bobld()
+        {
+            Run(cat_genetics_bobld, 1);
+        }
+
 
         [Fact]
         public void cat_geneticsTest()
