@@ -75,11 +75,10 @@
             var transformedPdfBounds = PerformantRectangleTransformer
                 .Transform(renderingMatrix, textMatrix, transformationMatrix, new PdfRectangle(0, 0, characterBoundingBox.Width, 0));
 
-                      
-                Letter letter = null;
-                if (Diacritics.IsInCombiningDiacriticRange(unicode) && bytes.CurrentOffset > 0 && letters.Count > 0)
-                {
-                    var attachTo = letters[letters.Count - 1];
+            Letter letter = null;
+            if (Diacritics.IsInCombiningDiacriticRange(unicode) && currentOffset > 0 && letters.Count > 0)
+            {
+                var attachTo = letters[letters.Count - 1];
 
                 if (attachTo.TextSequence == TextSequence
                     && Diacritics.TryCombineDiacriticWithPreviousLetter(unicode, attachTo.Value, out var newLetter))
@@ -87,39 +86,41 @@
                     // TODO: union of bounding boxes.
                     letters.Remove(attachTo);
 
-                        letter = new Letter(
-                            newLetter,
-                            attachTo.GlyphRectangle,
-                            attachTo.StartBaseLine,
-                            attachTo.EndBaseLine,
-                            attachTo.Width,
-                            attachTo.FontSize,
-                            attachTo.Font,
-                            attachTo.RenderingMode,
-                            attachTo.StrokeColor,
-                            attachTo.FillColor,
-                            attachTo.PointSize,
-                            attachTo.TextSequence);
-                    }
-                }
-
-                // If we did not create a letter for a combined diacritic, create one here.
-                if (letter == null)
-                {
                     letter = new Letter(
-                        unicode,
-                        transformedGlyphBounds,
-                        transformedPdfBounds.BottomLeft,
-                        transformedPdfBounds.BottomRight,
-                        transformedPdfBounds.Width,
-                        fontSize,
-                        font.Details,
-                        currentState.FontState.TextRenderingMode,
-                        currentState.CurrentStrokingColor,
-                        currentState.CurrentNonStrokingColor,
-                        pointSize,
-                        textSequence);
+                        newLetter,
+                        attachTo.GlyphRectangle,
+                        attachTo.StartBaseLine,
+                        attachTo.EndBaseLine,
+                        attachTo.Width,
+                        attachTo.FontSize,
+                        attachTo.Font,
+                        attachTo.RenderingMode,
+                        attachTo.StrokeColor,
+                        attachTo.FillColor,
+                        attachTo.PointSize,
+                        attachTo.TextSequence);
                 }
+            }
+
+            var currentState = GetCurrentState(); // TODO - pass stroking and text rendering mode
+
+            // If we did not create a letter for a combined diacritic, create one here.
+            if (letter == null)
+            {
+                letter = new Letter(
+                    unicode,
+                    transformedGlyphBounds,
+                    transformedPdfBounds.BottomLeft,
+                    transformedPdfBounds.BottomRight,
+                    transformedPdfBounds.Width,
+                    fontSize,
+                    font.Details,
+                    currentState.FontState.TextRenderingMode,
+                    currentState.CurrentStrokingColor,
+                    currentState.CurrentNonStrokingColor,
+                    pointSize,
+                    TextSequence);
+            }
 
             letters.Add(letter);
             markedContentStack.AddLetter(letter);
