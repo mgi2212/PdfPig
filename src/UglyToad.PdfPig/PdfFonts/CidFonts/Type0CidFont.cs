@@ -26,7 +26,7 @@
 
         public CharacterIdentifierSystemInfo SystemInfo { get; }
 
-        public FontDetails Details => fontProgram?.Details ?? Descriptor?.ToDetails(BaseFont?.Data) 
+        public FontDetails Details => fontProgram?.Details ?? Descriptor?.ToDetails(BaseFont?.Data)
                                       ?? FontDetails.GetDefault(BaseFont?.Data);
 
         public TransformationMatrix FontMatrix { get; }
@@ -39,8 +39,8 @@
 
         public Type0CidFont(ICidFontProgram fontProgram, NameToken type, NameToken subType, NameToken baseFont,
             CharacterIdentifierSystemInfo systemInfo,
-            FontDescriptor descriptor, 
-            VerticalWritingMetrics verticalWritingMetrics, 
+            FontDescriptor descriptor,
+            VerticalWritingMetrics verticalWritingMetrics,
             IReadOnlyDictionary<int, double> widths,
             double? defaultWidth)
         {
@@ -80,7 +80,7 @@
             {
                 return defaultWidth.Value;
             }
-            
+
             if (Descriptor == null)
             {
                 return 1000;
@@ -132,10 +132,26 @@
             return verticalWritingMetrics.GetDisplacementVector(characterIdentifier);
         }
 
-        public bool TryGetPath(int characterCode, out IReadOnlyList<PdfSubpath> path) => fontProgram.TryGetPath(characterCode, out path);
+        public bool TryGetPath(int characterCode, out IReadOnlyList<PdfSubpath> path)
+        {
+            path = null;
+            if (fontProgram == null)
+            {
+                return false;
+            }
+            return fontProgram.TryGetPath(characterCode, out path);
+        }
 
         public bool TryGetPath(int characterCode, Func<int, int?> characterCodeToGlyphId, out IReadOnlyList<PdfSubpath> path)
-            => fontProgram.TryGetPath(characterCode, characterCodeToGlyphId, out path);
+        {
+            path = null;
+            if (fontProgram == null)
+            {
+                return false;
+            }
+
+            return fontProgram.TryGetPath(characterCode, characterCodeToGlyphId, out path);
+        }
 
         public bool TryGetNormalisedPath(int characterCode, out IReadOnlyList<PdfSubpath> path)
         {

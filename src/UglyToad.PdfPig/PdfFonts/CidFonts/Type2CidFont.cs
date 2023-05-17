@@ -120,7 +120,14 @@
         public bool TryGetPath(int characterCode, out IReadOnlyList<PdfSubpath> path) => TryGetPath(characterCode, cidToGid.GetGlyphIndex, out path);
 
         public bool TryGetPath(int characterCode, Func<int, int?> characterCodeToGlyphId, out IReadOnlyList<PdfSubpath> path)
-            => fontProgram.TryGetPath(characterCode, characterCodeToGlyphId, out path);
+        {
+            path = null;
+            if (fontProgram == null)
+            {
+                return false;
+            }
+            return fontProgram.TryGetPath(characterCode, characterCodeToGlyphId, out path);
+        }
 
         public bool TryGetNormalisedPath(int characterCode, out IReadOnlyList<PdfSubpath> path)
         {

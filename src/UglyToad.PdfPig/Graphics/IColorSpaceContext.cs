@@ -1,6 +1,7 @@
 ﻿namespace UglyToad.PdfPig.Graphics
 {
     using Colors;
+    using System.Collections.Generic;
     using Tokens;
 
     /// <summary>
@@ -9,25 +10,21 @@
     public interface IColorSpaceContext
     {
         /// <summary>
-        /// The <see cref="ColorSpace"/> used for stroking operations.
+        /// TODO
         /// </summary>
-        ColorSpace CurrentStrokingColorSpace { get; }
+        /// <returns></returns>
+        IColorSpaceContext DeepClone();
 
         /// <summary>
-        /// The <see cref="ColorSpace"/> used for non-stroking operations.
+        /// The <see cref="ColorSpaceDetails"/> used for stroking operations.
         /// </summary>
-        ColorSpace CurrentNonStrokingColorSpace { get; }
+        ColorSpaceDetails CurrentStrokingColorSpaceDetails { get; }
 
         /// <summary>
-        /// The name of the advanced ColorSpace active for stroking operations, if any.
+        /// The <see cref="ColorSpaceDetails"/> used for non-stroking operations.
         /// </summary>
-        NameToken AdvancedStrokingColorSpace { get; }
+        ColorSpaceDetails CurrentNonStrokingColorSpaceDetails { get; internal set; } // TODO - to check - internal set for 'transparency group attributes'
 
-        /// <summary>
-        /// The name of the advanced ColorSpace active for non-stroking operations, if any.
-        /// </summary>
-        NameToken AdvancedNonStrokingColorSpace { get; }
-        
         /// <summary>
         ///  Set the current color space to use for stroking operations.
         /// </summary>
@@ -37,6 +34,13 @@
         ///  Set the current color space to use for nonstroking operations.
         /// </summary>
         void SetNonStrokingColorspace(NameToken colorspace);
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="operands"></param>
+        /// <param name="patternName"></param>
+        void SetStrokingColor(IReadOnlyList<decimal> operands, NameToken patternName = null);
 
         /// <summary>
         /// Set the stroking color space to DeviceGray and set the gray level to use for stroking operations.
@@ -60,6 +64,13 @@
         /// <param name="y">Yellow - A number between 0 (minimum concentration) and 1 (maximum concentration).</param>
         /// <param name="k">Black - A number between 0 (minimum concentration) and 1 (maximum concentration).</param>
         void SetStrokingColorCmyk(decimal c, decimal m, decimal y, decimal k);
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <param name="operands"></param>
+        /// <param name="patternName"></param>
+        void SetNonStrokingColor(IReadOnlyList<decimal> operands, NameToken patternName = null);
 
         /// <summary>
         /// Set the nonstroking color space to DeviceGray and set the gray level to use for nonstroking operations.

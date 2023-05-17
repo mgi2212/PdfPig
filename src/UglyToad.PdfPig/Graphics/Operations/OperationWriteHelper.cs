@@ -1,9 +1,9 @@
 ﻿namespace UglyToad.PdfPig.Graphics.Operations
 {
+    using PdfPig.Core;
     using System;
     using System.Globalization;
     using System.IO;
-    using PdfPig.Core;
 
     internal static class OperationWriteHelper
     {

@@ -11,6 +11,7 @@
     using Fonts.Type1;
     using Tokens;
     using Util.JetBrains.Annotations;
+    using static UglyToad.PdfPig.Core.PdfSubpath;
 
     /// <summary>
     /// A font based on the Adobe Type 1 font format.

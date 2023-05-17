@@ -7,7 +7,7 @@
 
     /// <inheritdoc />
     /// <summary>
-    /// Set the current color space to use for stroking operations. 
+    /// Set the current color space to use for stroking operations.
     /// </summary>
     public class SetStrokeColorSpace : IGraphicsStateOperation
     {
@@ -38,7 +38,7 @@
         /// <inheritdoc />
         public void Run(IOperationContext operationContext)
         {
-            operationContext.ColorSpaceContext.SetStrokingColorspace(Name);
+            operationContext.GetCurrentState().ColorSpaceContext.SetStrokingColorspace(Name);
         }
 
         /// <inheritdoc />

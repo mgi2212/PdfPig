@@ -15,7 +15,10 @@ namespace UglyToad.PdfPig.Fonts.SystemFonts
     /// <inheritdoc />
     public class SystemFontFinder : ISystemFontFinder
     {
-        private static readonly IReadOnlyDictionary<string, string[]> NameSubstitutes;
+        /// <summary>
+        /// TODO
+        /// </summary>
+        public static readonly IReadOnlyDictionary<string, string[]> NameSubstitutes;
         private static readonly Lazy<IReadOnlyList<SystemFontRecord>> AvailableFonts;
 
         private static readonly object CacheLock = new object();

@@ -37,64 +37,16 @@
             }
 
             // Remove padding bytes when the stride width differs from the image width
-            var bytesPerPixel = details is IndexedColorSpaceDetails ? 1 : GetBytesPerPixel(details);
+            var bytesPerPixel = details.NumberOfColorComponents;
             var strideWidth = decoded.Count / imageHeight / bytesPerPixel;
             if (strideWidth != imageWidth)
             {
                 decoded = RemoveStridePadding(decoded.ToArray(), strideWidth, imageWidth, imageHeight, bytesPerPixel);
             }
 
-            // In case of indexed color space images, unwrap indices to actual pixel component values
-            if (details is IndexedColorSpaceDetails indexed)
-            {
-                decoded = UnwrapIndexedColorSpaceBytes(indexed, decoded);
-
-                // Use the base color space in potential further decoding
-                details = indexed.BaseColorSpaceDetails;
-            }
-
-            if (details is CalRGBColorSpaceDetails calRgb)
-            {
-                decoded = TransformToRGB(calRgb, decoded);
-            }
-
-            if (details is CalGrayColorSpaceDetails calGray)
-            {
-                decoded = TransformToRgbGrayScale(calGray, decoded);
-            }
+            // TODO - We should process color space here
 
             return decoded.ToArray();
-        }
-
-        private static int GetBytesPerPixel(ColorSpaceDetails details)
-        {
-            switch (details)
-            {
-                case DeviceGrayColorSpaceDetails deviceGray:
-                    return 1;
-
-                case CalGrayColorSpaceDetails calGray:
-                    return 1;
-
-                case DeviceRgbColorSpaceDetails deviceRgb:
-                    return 3;
-
-                case CalRGBColorSpaceDetails calRgb:
-                    return 3;
-
-                case DeviceCmykColorSpaceDetails deviceCmyk:
-                    return 4;
-
-                case IndexedColorSpaceDetails indexed:
-                    return GetBytesPerPixel(indexed.BaseColorSpaceDetails);
-
-                case ICCBasedColorSpaceDetails iccBased:
-                    // Currently PdfPig only supports the 'Alternate' color space of ICCBasedColorSpaceDetails
-                    return GetBytesPerPixel(iccBased.AlternateColorSpaceDetails);
-
-                default:
-                    return 1;
-            }
         }
 
         private static byte[] UnpackComponents(IReadOnlyList<byte> input, int bitsPerComponent)
@@ -124,35 +76,35 @@
             return result;
         }
 
-        private static IReadOnlyList<byte> TransformToRgbGrayScale(CalGrayColorSpaceDetails calGray, IReadOnlyList<byte> decoded)
-        {
-            var transformed = new List<byte>();
-            for (var i = 0; i < decoded.Count; i++)
-            {
-                var component = decoded[i] / 255m;
-                var rgbPixel = calGray.TransformToRGB(component);
-                // We only need one component here 
-                transformed.Add(ConvertToByte(rgbPixel.R));
-            }
+        //private static IReadOnlyList<byte> TransformToRgbGrayScale(CalGrayColorSpaceDetails calGray, IReadOnlyList<byte> decoded)
+        //{
+        //    var transformed = new List<byte>();
+        //    for (var i = 0; i < decoded.Count; i++)
+        //    {
+        //        var component = decoded[i] / 255m;
+        //        var rgbPixel = calGray.TransformToRGB(component);
+        //        // We only need one component here 
+        //        transformed.Add(ConvertToByte(rgbPixel.R));
+        //    }
 
-            return transformed;
-        }
+        //    return transformed;
+        //}
 
-        private static IReadOnlyList<byte> TransformToRGB(CalRGBColorSpaceDetails calRgb, IReadOnlyList<byte> decoded)
-        {
-            var transformed = new List<byte>();
-            for (var i = 0; i < decoded.Count; i += 3)
-            {
-                var rgbPixel = calRgb.TransformToRGB((decoded[i] / 255m, decoded[i + 1] / 255m, decoded[i + 2] / 255m));
-                transformed.Add(ConvertToByte(rgbPixel.R));
-                transformed.Add(ConvertToByte(rgbPixel.G));
-                transformed.Add(ConvertToByte(rgbPixel.B));
-            }
+        //private static IReadOnlyList<byte> TransformToRGB(CalRGBColorSpaceDetails calRgb, IReadOnlyList<byte> decoded)
+        //{
+        //    var transformed = new List<byte>();
+        //    for (var i = 0; i < decoded.Count; i += 3)
+        //    {
+        //        var rgbPixel = calRgb.TransformToRGB((decoded[i] / 255m, decoded[i + 1] / 255m, decoded[i + 2] / 255m));
+        //        transformed.Add(ConvertToByte(rgbPixel.R));
+        //        transformed.Add(ConvertToByte(rgbPixel.G));
+        //        transformed.Add(ConvertToByte(rgbPixel.B));
+        //    }
 
-            return transformed;
-        }
+        //    return transformed;
+        //}
 
-        private static byte[] UnwrapIndexedColorSpaceBytes(IndexedColorSpaceDetails indexed, IReadOnlyList<byte> input)
+        internal static byte[] UnwrapIndexedColorSpaceBytes(IndexedColorSpaceDetails indexed, IReadOnlyList<byte> input)
         {
             var multiplier = 1;
             Func<byte, IEnumerable<byte>> transformer = null;

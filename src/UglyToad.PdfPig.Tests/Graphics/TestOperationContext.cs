@@ -271,6 +271,10 @@
             GetCurrentState().FontState.CharacterSpacing = spacing;
         }
 
+        public void ApplyShading(NameToken shading)
+        {
+        }
+
         private class TestFontFactory : IFontFactory
         {
             public IFont Get(DictionaryToken dictionary)

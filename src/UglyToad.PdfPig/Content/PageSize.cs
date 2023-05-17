@@ -1,5 +1,6 @@
 ﻿namespace UglyToad.PdfPig.Content
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using Core;
@@ -111,7 +112,8 @@
 
         public static PageSize GetPageSize(this PdfRectangle rectangle)
         {
-            if (!Lookup.TryGetValue(new WidthHeight(rectangle.Width, rectangle.Height), out var size))
+            if (!Lookup.TryGetValue(new WidthHeight(rectangle.Width, rectangle.Height), out var size)
+                && !Lookup.TryGetValue(new WidthHeight(rectangle.Height, rectangle.Width), out size))
             {
                 return PageSize.Custom;
             }
@@ -148,15 +150,15 @@
             public override bool Equals(object obj)
             {
                 return obj is WidthHeight height &&
-                       Width == height.Width &&
-                       Height == height.Height;
+                    Math.Abs(Width - height.Width) < 1 &&
+                    Math.Abs(Height - height.Height) < 1;
             }
 
             public override int GetHashCode()
             {
                 var hashCode = 859600377;
-                hashCode = hashCode * -1521134295 + Width.GetHashCode();
-                hashCode = hashCode * -1521134295 + Height.GetHashCode();
+                hashCode = hashCode * -1521134295 + Math.Round(Width).GetHashCode();
+                hashCode = hashCode * -1521134295 + Math.Round(Height).GetHashCode();
                 return hashCode;
             }
         }

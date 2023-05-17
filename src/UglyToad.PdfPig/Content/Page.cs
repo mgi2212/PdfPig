@@ -11,6 +11,7 @@
     using Tokenization.Scanner;
     using Graphics;
     using System.Linq;
+    using UglyToad.PdfPig.Geometry;
 
     /// <summary>
     /// Contains the content and provides access to methods of a single page in the <see cref="PdfDocument"/>.
@@ -90,8 +91,7 @@
         public Experimental ExperimentalAccess { get; }
 
         internal Page(int number, DictionaryToken dictionary, MediaBox mediaBox, CropBox cropBox, PageRotationDegrees rotation, PageContent content,
-            AnnotationProvider annotationProvider,
-            IPdfTokenScanner pdfScanner)
+            AnnotationProvider annotationProvider, IPdfTokenScanner pdfScanner)
         {
             if (number <= 0)
             {
@@ -107,10 +107,13 @@
             Content = content;
             textLazy = new Lazy<string>(() => GetText(Content));
 
-            Width = mediaBox.Bounds.Width;
-            Height = mediaBox.Bounds.Height;
+            // Special case where cropbox is outside mediabox: use cropbox instead of intersection
+            var viewBox = mediaBox.Bounds.Intersect(cropBox.Bounds) ?? cropBox.Bounds;
 
-            Size = mediaBox.Bounds.GetPageSize();
+            Width = (rotation.SwapsAxis ? viewBox.Height : viewBox.Width);// * content.userSpaceUnit.PointMultiples;
+            Height = (rotation.SwapsAxis ? viewBox.Width : viewBox.Height);// * content.userSpaceUnit.PointMultiples;
+            Size = viewBox.GetPageSize();
+
             ExperimentalAccess = new Experimental(this, annotationProvider);
             this.annotationProvider = annotationProvider;
             this.pdfScanner = pdfScanner ?? throw new ArgumentNullException(nameof(pdfScanner));
@@ -166,6 +169,16 @@
         /// Gets any marked content on the page.
         /// </summary>
         public IReadOnlyList<MarkedContentElement> GetMarkedContents() => Content.GetMarkedContents();
+
+        /// <summary>
+        /// Convert page to image
+        /// </summary>
+        /// <param name="scale"></param>
+        /// <param name="drawingProcessor"></param>
+        public System.IO.MemoryStream ToImage(double scale, IDrawingProcessor drawingProcessor)
+        {
+            return drawingProcessor.DrawPage(this, scale);
+        }
 
         /// <summary>
         /// Provides access to useful members which will change in future releases.

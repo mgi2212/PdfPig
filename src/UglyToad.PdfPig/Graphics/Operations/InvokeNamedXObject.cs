@@ -4,12 +4,15 @@
     using System.IO;
     using Tokens;
 
-    /// <inheritdoc />
     /// <summary>
-    /// Paint the specified XObject. 
-    /// The operand name must appear as a key in the XObject subdictionary of the current resource dictionary. 
+    /// <inheritdoc/>
+    /// <para>
+    /// Paint the specified XObject.
+    /// The operand name must appear as a key in the XObject subdictionary of the current resource dictionary.
     /// The associated value must be a stream whose Type entry, if present, is XObject.
-    /// The effect of <see cref="T:UglyToad.PdfPig.Graphics.Operations.InvokeNamedXObject" /> depends on the value of the XObject's Subtype entry, which may be Image, Form or PS. 
+    /// The effect of <see cref="InvokeNamedXObject"/> depends on the value of the XObject's Subtype entry,
+    /// which may be Image, Form or PS.
+    /// </para>
     /// </summary>
     public class InvokeNamedXObject : IGraphicsStateOperation
     {

@@ -81,7 +81,7 @@
             {
                 colorspace = ColorSpace.Separation;
             }
-            else if (name.Data == NameToken.Devicen.Data)
+            else if (name.Data == NameToken.DeviceN.Data)
             {
                 colorspace = ColorSpace.DeviceN;
             }
@@ -121,7 +121,7 @@
                 case ColorSpace.Separation:
                     return NameToken.Separation;
                 case ColorSpace.DeviceN:
-                    return NameToken.Devicen;
+                    return NameToken.DeviceN;
                 default:
                     throw new ArgumentException($"Unrecognized colorspace: {colorSpace}.");
             }

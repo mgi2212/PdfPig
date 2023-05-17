@@ -1,22 +1,35 @@
 ﻿namespace UglyToad.PdfPig.Graphics
 {
-    using System;
     using Colors;
     using Content;
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using Tokens;
 
     internal class ColorSpaceContext : IColorSpaceContext
     {
+        public IColorSpaceContext DeepClone()
+        {
+            return new ColorSpaceContext(currentStateFunc, resourceStore)
+            {
+                CurrentStrokingColorSpaceDetails = CurrentStrokingColorSpaceDetails,
+                CurrentNonStrokingColorSpaceDetails = CurrentNonStrokingColorSpaceDetails
+            };
+        }
+
         private readonly Func<CurrentGraphicsState> currentStateFunc;
         private readonly IResourceStore resourceStore;
 
-        public ColorSpace CurrentStrokingColorSpace { get; private set; } = ColorSpace.DeviceGray;
+        /// <summary>
+        /// The <see cref="ColorSpaceDetails"/> used for stroking operations.
+        /// </summary>
+        public ColorSpaceDetails CurrentStrokingColorSpaceDetails { get; private set; } = DeviceGrayColorSpaceDetails.Instance;
 
-        public ColorSpace CurrentNonStrokingColorSpace { get; private set; } = ColorSpace.DeviceGray;
-
-        public NameToken AdvancedStrokingColorSpace { get; private set; }
-
-        public NameToken AdvancedNonStrokingColorSpace { get; private set; }
+        /// <summary>
+        /// The <see cref="ColorSpaceDetails"/> used for non-stroking operations.
+        /// </summary>
+        public ColorSpaceDetails CurrentNonStrokingColorSpaceDetails { get; set; } = DeviceGrayColorSpaceDetails.Instance;
 
         public ColorSpaceContext(Func<CurrentGraphicsState> currentStateFunc, IResourceStore resourceStore)
         {
@@ -26,121 +39,31 @@
 
         public void SetStrokingColorspace(NameToken colorspace)
         {
-            void DefaultColorSpace(ColorSpace? colorSpaceActual = null)
-            {
-                if (colorSpaceActual.HasValue)
-                {
-                    switch (colorSpaceActual)
-                    {
-                        case ColorSpace.DeviceGray:
-                            currentStateFunc().CurrentStrokingColor = GrayColor.Black;
-                            break;
-                        case ColorSpace.DeviceRGB:
-                            currentStateFunc().CurrentStrokingColor = RGBColor.Black;
-                            break;
-                        case ColorSpace.DeviceCMYK:
-                            currentStateFunc().CurrentStrokingColor = CMYKColor.Black;
-                            break;
-                        default:
-                            currentStateFunc().CurrentStrokingColor = GrayColor.Black;
-                            break;
-                    }
-                }
-                else
-                {
-                    CurrentStrokingColorSpace = ColorSpace.DeviceGray;
-                    currentStateFunc().CurrentStrokingColor = GrayColor.Black;
-                }
-            }
-
-            AdvancedStrokingColorSpace = null;
-
-            if (colorspace.TryMapToColorSpace(out var colorspaceActual))
-            {
-                CurrentStrokingColorSpace = colorspaceActual;
-            }
-            else if (resourceStore.TryGetNamedColorSpace(colorspace, out var namedColorSpace))
-            {
-                if (namedColorSpace.Name == NameToken.Separation && namedColorSpace.Data is ArrayToken separationArray
-                                                                 && separationArray.Length == 4
-                                                                 && separationArray[2] is NameToken alternativeColorSpaceName
-                                                                 && alternativeColorSpaceName.TryMapToColorSpace(out colorspaceActual))
-                {
-                    AdvancedStrokingColorSpace = namedColorSpace.Name;
-                    CurrentStrokingColorSpace = colorspaceActual;
-                    DefaultColorSpace(colorspaceActual);
-                }
-                else
-                {
-                    DefaultColorSpace();
-                }
-            }
-            else
-            {
-                DefaultColorSpace();
-            }
+            CurrentStrokingColorSpaceDetails = resourceStore.GetColorSpaceDetails(colorspace, null);
+            currentStateFunc().CurrentStrokingColor = CurrentStrokingColorSpaceDetails.GetInitializeColor();
         }
 
         public void SetNonStrokingColorspace(NameToken colorspace)
         {
-            void DefaultColorSpace(ColorSpace? colorSpaceActual = null)
-            {
-                if (colorSpaceActual.HasValue)
-                {
-                    switch (colorSpaceActual)
-                    {
-                        case ColorSpace.DeviceGray:
-                            currentStateFunc().CurrentNonStrokingColor = GrayColor.Black;
-                            break;
-                        case ColorSpace.DeviceRGB:
-                            currentStateFunc().CurrentNonStrokingColor = RGBColor.Black;
-                            break;
-                        case ColorSpace.DeviceCMYK:
-                            currentStateFunc().CurrentNonStrokingColor = CMYKColor.Black;
-                            break;
-                        default:
-                            currentStateFunc().CurrentNonStrokingColor = GrayColor.Black;
-                            break;
-                    }
-                }
-                else
-                {
-                    CurrentNonStrokingColorSpace = ColorSpace.DeviceGray;
-                    currentStateFunc().CurrentNonStrokingColor = GrayColor.Black;
-                }
-            }
+            CurrentNonStrokingColorSpaceDetails = resourceStore.GetColorSpaceDetails(colorspace, null);
+            currentStateFunc().CurrentNonStrokingColor = CurrentNonStrokingColorSpaceDetails.GetInitializeColor();
+        }
 
-            AdvancedNonStrokingColorSpace = null;
-
-            if (colorspace.TryMapToColorSpace(out var colorspaceActual))
+        public void SetStrokingColor(IReadOnlyList<decimal> operands, NameToken patternName)
+        {
+            if (patternName != null && CurrentStrokingColorSpaceDetails is PatternColorSpaceDetails patternColorSpaceDetails)
             {
-                CurrentNonStrokingColorSpace = colorspaceActual;
-            }
-            else if (resourceStore.TryGetNamedColorSpace(colorspace, out var namedColorSpace))
-            {
-                if (namedColorSpace.Name == NameToken.Separation && namedColorSpace.Data is ArrayToken separationArray
-                                                                 && separationArray.Length == 4
-                                                                 && separationArray[2] is NameToken alternativeColorSpaceName
-                                                                 && alternativeColorSpaceName.TryMapToColorSpace(out colorspaceActual))
-                {
-                    AdvancedNonStrokingColorSpace = namedColorSpace.Name;
-                    CurrentNonStrokingColorSpace = colorspaceActual;
-                    DefaultColorSpace(colorspaceActual);
-                }
-                else
-                {
-                    DefaultColorSpace();
-                }
+                currentStateFunc().CurrentStrokingColor = patternColorSpaceDetails.GetPattern(patternName);
             }
             else
             {
-                DefaultColorSpace();
+                currentStateFunc().CurrentStrokingColor = CurrentStrokingColorSpaceDetails.GetColor(operands.Select(v => (double)v).ToArray());
             }
         }
 
         public void SetStrokingColorGray(decimal gray)
         {
-            CurrentStrokingColorSpace = ColorSpace.DeviceGray;
+            CurrentStrokingColorSpaceDetails = DeviceGrayColorSpaceDetails.Instance;
 
             if (gray == 0)
             {
@@ -158,7 +81,7 @@
 
         public void SetStrokingColorRgb(decimal r, decimal g, decimal b)
         {
-            CurrentStrokingColorSpace = ColorSpace.DeviceRGB;
+            CurrentStrokingColorSpaceDetails = DeviceRgbColorSpaceDetails.Instance;
 
             if (r == 0 && g == 0 && b == 0)
             {
@@ -176,13 +99,35 @@
 
         public void SetStrokingColorCmyk(decimal c, decimal m, decimal y, decimal k)
         {
-            CurrentStrokingColorSpace = ColorSpace.DeviceCMYK;
+            CurrentStrokingColorSpaceDetails = DeviceCmykColorSpaceDetails.Instance;
+
+            if (c == 0 && m == 0 && y == 0 && k == 1)
+            {
+                currentStateFunc().CurrentStrokingColor = CMYKColor.Black;
+            }
+            else if (c == 0 && m == 0 && y == 0 && k == 0)
+            {
+                currentStateFunc().CurrentStrokingColor = CMYKColor.White;
+            }
+
             currentStateFunc().CurrentStrokingColor = new CMYKColor(c, m, y, k);
+        }
+
+        public void SetNonStrokingColor(IReadOnlyList<decimal> operands, NameToken patternName)
+        {
+            if (patternName != null && CurrentNonStrokingColorSpaceDetails is PatternColorSpaceDetails patternColorSpaceDetails)
+            {
+                currentStateFunc().CurrentNonStrokingColor = patternColorSpaceDetails.GetPattern(patternName);
+            }
+            else
+            {
+                currentStateFunc().CurrentNonStrokingColor = CurrentNonStrokingColorSpaceDetails.GetColor(operands.Select(v => (double)v).ToArray());
+            }
         }
 
         public void SetNonStrokingColorGray(decimal gray)
         {
-            CurrentNonStrokingColorSpace = ColorSpace.DeviceGray;
+            CurrentNonStrokingColorSpaceDetails = DeviceGrayColorSpaceDetails.Instance;
 
             if (gray == 0)
             {
@@ -200,7 +145,7 @@
 
         public void SetNonStrokingColorRgb(decimal r, decimal g, decimal b)
         {
-            CurrentNonStrokingColorSpace = ColorSpace.DeviceRGB;
+            CurrentNonStrokingColorSpaceDetails = DeviceRgbColorSpaceDetails.Instance;
 
             if (r == 0 && g == 0 && b == 0)
             {
@@ -218,7 +163,7 @@
 
         public void SetNonStrokingColorCmyk(decimal c, decimal m, decimal y, decimal k)
         {
-            CurrentNonStrokingColorSpace = ColorSpace.DeviceCMYK;
+            CurrentNonStrokingColorSpaceDetails = DeviceCmykColorSpaceDetails.Instance;
             currentStateFunc().CurrentNonStrokingColor = new CMYKColor(c, m, y, k);
         }
     }

@@ -154,7 +154,7 @@
         public static readonly NameToken Dests = new NameToken("Dests");
         public static readonly NameToken Devicecmyk = new NameToken("DeviceCMYK");
         public static readonly NameToken Devicegray = new NameToken("DeviceGray");
-        public static readonly NameToken Devicen = new NameToken("DeviceN");
+        public static readonly NameToken DeviceN = new NameToken("DeviceN");
         public static readonly NameToken Devicergb = new NameToken("DeviceRGB");
         public static readonly NameToken Di = new NameToken("Di");
         public static readonly NameToken Difference = new NameToken("Difference");
@@ -348,6 +348,7 @@
         public static readonly NameToken Metadata = new NameToken("Metadata");
         public static readonly NameToken MissingWidth = new NameToken("MissingWidth");
         public static readonly NameToken Mix = new NameToken("Mix");
+        public static readonly NameToken MixingHints = new NameToken("MixingHints");
         public static readonly NameToken Mk = new NameToken("MK");
         public static readonly NameToken Ml = new NameToken("ML");
         public static readonly NameToken MmType1 = new NameToken("MMType1");

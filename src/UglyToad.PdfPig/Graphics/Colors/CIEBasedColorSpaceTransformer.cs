@@ -5,10 +5,11 @@
 
     /// <summary>
     /// Transformer for CIEBased color spaces.
-    ///
+    /// <para>
     /// In addition to the PDF spec itself, the transformation implementation is based on the descriptions in:
     /// https://en.wikipedia.org/wiki/SRGB#The_forward_transformation_(CIE_XYZ_to_sRGB) and
     /// http://www.brucelindbloom.com/index.html?Eqn_XYZ_to_RGB.html
+    /// </para>
     /// </summary>
     internal class CIEBasedColorSpaceTransformer
     {
@@ -80,6 +81,20 @@
         public (double R, double G, double B) TransformToRGB((double A, double B, double C) color)
         {
             var xyz = TransformToXYZ(color);
+
+            var adaptedColor = chromaticAdaptation.Transform(xyz);
+            var rgb = transformationMatrix.Multiply(adaptedColor);
+
+            var gammaCorrectedR = destinationWorkingSpace.GammaCorrection(rgb.Item1);
+            var gammaCorrectedG = destinationWorkingSpace.GammaCorrection(rgb.Item2);
+            var gammaCorrectedB = destinationWorkingSpace.GammaCorrection(rgb.Item3);
+
+            return (Clamp(gammaCorrectedR), Clamp(gammaCorrectedG), Clamp(gammaCorrectedB));
+        }
+
+        public (double R, double G, double B) XYZToRGB((double A, double B, double C) xyz)
+        {
+            //var xyz = TransformToXYZ(color);
 
             var adaptedColor = chromaticAdaptation.Transform(xyz);
             var rgb = transformationMatrix.Multiply(adaptedColor);

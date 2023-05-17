@@ -307,16 +307,12 @@ namespace UglyToad.PdfPig.Graphics
                     var errorMessageScnLower = string.Join(", ", operands.Select(x => x.ToString()));
                     throw new PdfDocumentFormatException($"Attempted to set a non-stroke color space (scn) with invalid arguments: [{errorMessageScnLower}]");
                 case SetNonStrokeColorDeviceCmyk.Symbol:
-                    return new SetNonStrokeColorDeviceCmyk(OperandToDecimal(operands[0]),
-                        OperandToDecimal(operands[1]),
-                        OperandToDecimal(operands[2]),
-                        OperandToDecimal(operands[3]));
+                    return new SetNonStrokeColorDeviceCmyk(OperandToDecimal(operands[0]), OperandToDecimal(operands[1]),
+                                                           OperandToDecimal(operands[2]), OperandToDecimal(operands[3]));
                 case SetNonStrokeColorDeviceGray.Symbol:
                     return new SetNonStrokeColorDeviceGray(OperandToDecimal(operands[0]));
                 case SetNonStrokeColorDeviceRgb.Symbol:
-                    return new SetNonStrokeColorDeviceRgb(OperandToDecimal(operands[0]),
-                        OperandToDecimal(operands[1]),
-                        OperandToDecimal(operands[2]));
+                    return new SetNonStrokeColorDeviceRgb(OperandToDecimal(operands[0]), OperandToDecimal(operands[1]), OperandToDecimal(operands[2]));
                 case SetNonStrokeColorSpace.Symbol:
                     return new SetNonStrokeColorSpace((NameToken)operands[0]);
                 case SetStrokeColor.Symbol:
@@ -334,16 +330,12 @@ namespace UglyToad.PdfPig.Graphics
                     var errorMessageScn = string.Join(", ", operands.Select(x => x.ToString()));
                     throw new PdfDocumentFormatException($"Attempted to set a stroke color space (SCN) with invalid arguments: [{errorMessageScn}]");
                 case SetStrokeColorDeviceCmyk.Symbol:
-                    return new SetStrokeColorDeviceCmyk(OperandToDecimal(operands[0]),
-                        OperandToDecimal(operands[1]),
-                        OperandToDecimal(operands[2]),
-                        OperandToDecimal(operands[3]));
+                    return new SetStrokeColorDeviceCmyk(OperandToDecimal(operands[0]), OperandToDecimal(operands[1]),
+                                                        OperandToDecimal(operands[2]), OperandToDecimal(operands[3]));
                 case SetStrokeColorDeviceGray.Symbol:
                     return new SetStrokeColorDeviceGray(OperandToDecimal(operands[0]));
                 case SetStrokeColorDeviceRgb.Symbol:
-                    return new SetStrokeColorDeviceRgb(OperandToDecimal(operands[0]),
-                        OperandToDecimal(operands[1]),
-                        OperandToDecimal(operands[2]));
+                    return new SetStrokeColorDeviceRgb(OperandToDecimal(operands[0]), OperandToDecimal(operands[1]), OperandToDecimal(operands[2]));
                 case SetStrokeColorSpace.Symbol:
                     return new SetStrokeColorSpace((NameToken)operands[0]);
                 case SetTextMatrix.Symbol:

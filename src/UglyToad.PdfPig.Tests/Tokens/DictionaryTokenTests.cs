@@ -12,7 +12,8 @@ namespace UglyToad.PdfPig.Tests.Tokens
         [Fact]
         public void NullDictionaryThrows()
         {
-            Action action = () => new DictionaryToken(null);
+            IReadOnlyDictionary<NameToken, IToken> dictionary = null;
+            Action action = () => new DictionaryToken(dictionary);
 
             Assert.Throws<ArgumentNullException>(action);
         }

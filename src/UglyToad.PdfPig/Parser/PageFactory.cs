@@ -73,18 +73,18 @@
                 stackDepth++;
             }
 
-            // Apply rotation.
-            if (rotation.SwapsAxis)
-            {
-                mediaBox = new MediaBox(new PdfRectangle(mediaBox.Bounds.Bottom,
-                    mediaBox.Bounds.Left,
-                    mediaBox.Bounds.Top,
-                    mediaBox.Bounds.Right));
-                cropBox = new CropBox(new PdfRectangle(cropBox.Bounds.Bottom,
-                    cropBox.Bounds.Left,
-                    cropBox.Bounds.Top,
-                    cropBox.Bounds.Right));
-            }
+            //// Apply rotation.
+            //if (rotation.SwapsAxis)
+            //{
+            //    mediaBox = new MediaBox(new PdfRectangle(mediaBox.Bounds.Bottom,
+            //        mediaBox.Bounds.Left,
+            //        mediaBox.Bounds.Top,
+            //        mediaBox.Bounds.Right));
+            //    cropBox = new CropBox(new PdfRectangle(cropBox.Bounds.Bottom,
+            //        cropBox.Bounds.Left,
+            //        cropBox.Bounds.Top,
+            //        cropBox.Bounds.Right));
+            //}
 
             UserSpaceUnit userSpaceUnit = GetUserSpaceUnits(dictionary);
 
@@ -98,8 +98,11 @@
                     EmptyArray<Union<XObjectContentRecord, InlineImage>>.Instance,
                     EmptyArray<MarkedContentElement>.Instance,
                     pdfScanner,
+                    pageContentParser,
                     filterProvider,
-                    resourceStore);
+                    resourceStore,
+                    userSpaceUnit,
+                    parsingOptions);
                 // ignored for now, is it possible? check the spec...
             }
             else if (DirectObjectFinder.TryGet<ArrayToken>(contents, pdfScanner, out var array))
@@ -150,10 +153,13 @@
                 new AnnotationProvider(pdfScanner, dictionary),
                 pdfScanner);
 
+            /*
+            // deactivated for image rendering
             for (var i = 0; i < stackDepth; i++)
             {
                 resourceStore.UnloadResourceDictionary();
             }
+            */
 
             return page;
         }
@@ -171,14 +177,14 @@
                 parsingOptions.Logger);
 
             var context = new ContentStreamProcessor(
-                cropBox.Bounds,
                 resourceStore,
                 userSpaceUnit,
+                mediaBox.Bounds,
+                cropBox.Bounds,
                 rotation,
                 pdfScanner,
                 pageContentParser,
                 filterProvider,
-                new PdfVector(mediaBox.Bounds.Width, mediaBox.Bounds.Height),
                 parsingOptions);
 
             return context.Process(pageNumber, operations);
@@ -214,7 +220,7 @@
                     return cropBox;
                 }
 
-                cropBox = new CropBox(cropBoxArray.ToIntRectangle(pdfScanner));
+                cropBox = new CropBox(cropBoxArray.ToRectangle(pdfScanner));
             }
             else
             {
@@ -243,7 +249,7 @@
                     return mediaBox;
                 }
 
-                mediaBox = new MediaBox(mediaboxArray.ToIntRectangle(pdfScanner));
+                mediaBox = new MediaBox(mediaboxArray.ToRectangle(pdfScanner));
             }
             else
             {

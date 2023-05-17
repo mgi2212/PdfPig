@@ -14,6 +14,11 @@ namespace UglyToad.PdfPig.Graphics
     public class CurrentGraphicsState : IDeepCloneable<CurrentGraphicsState>
     {
         /// <summary>
+        /// The active colorspaces for this content stream.
+        /// </summary>
+        public IColorSpaceContext ColorSpaceContext { get; set; }
+
+        /// <summary>
         /// The current clipping path.
         /// </summary>
         public PdfPath CurrentClippingPath { get; set; }
@@ -54,6 +59,11 @@ namespace UglyToad.PdfPig.Graphics
         public RenderingIntent RenderingIntent { get; set; } = RenderingIntent.RelativeColorimetric;
 
         /// <summary>
+        /// TODO
+        /// </summary>
+        public BlendMode BlendMode { get; set; } = BlendMode.Normal;
+
+        /// <summary>
         /// Should a correction for rasterization effects be applied?
         /// </summary>
         public bool StrokeAdjustment { get; set; } = false;
@@ -61,7 +71,12 @@ namespace UglyToad.PdfPig.Graphics
         /// <summary>
         /// Opacity value to be used for transparent imaging.
         /// </summary>
-        public decimal AlphaConstant { get; set; } = 1;
+        public decimal AlphaConstantStroking { get; set; } = 1;
+
+        /// <summary>
+        /// Opacity value to be used for transparent imaging.
+        /// </summary>
+        public decimal AlphaConstantNonStroking { get; set; } = 1;
 
         /// <summary>
         /// Should soft mask and alpha constant values be interpreted as shape (<see langword="true"/>) or opacity (<see langword="false"/>) values?
@@ -121,6 +136,7 @@ namespace UglyToad.PdfPig.Graphics
             {
                 FontState = FontState?.DeepClone(),
                 RenderingIntent = RenderingIntent,
+                BlendMode = BlendMode,
                 LineDashPattern = LineDashPattern,
                 CurrentTransformationMatrix = CurrentTransformationMatrix,
                 LineWidth = LineWidth,
@@ -129,7 +145,8 @@ namespace UglyToad.PdfPig.Graphics
                 CapStyle = CapStyle,
                 MiterLimit = MiterLimit,
                 Flatness = Flatness,
-                AlphaConstant = AlphaConstant,
+                AlphaConstantStroking = AlphaConstantStroking,
+                AlphaConstantNonStroking = AlphaConstantNonStroking,
                 AlphaSource = AlphaSource,
                 NonStrokingOverprint = NonStrokingOverprint,
                 OverprintMode = OverprintMode,
@@ -137,7 +154,8 @@ namespace UglyToad.PdfPig.Graphics
                 StrokeAdjustment = StrokeAdjustment,
                 CurrentStrokingColor = CurrentStrokingColor,
                 CurrentNonStrokingColor = CurrentNonStrokingColor,
-                CurrentClippingPath = CurrentClippingPath
+                CurrentClippingPath = CurrentClippingPath,
+                ColorSpaceContext = ColorSpaceContext?.DeepClone()
             };
         }
     }

@@ -66,6 +66,12 @@
         /// <inheritdoc />
         public ColorSpaceDetails ColorSpaceDetails { get; }
 
+        /// <inheritdoc />
+        public IPdfImage SMask { get; }
+
+        /// <inheritdoc />
+        public XmpMetadata Metadata { get; }
+
         /// <summary>
         /// Creates a new <see cref="XObjectImage"/>.
         /// </summary>
@@ -82,7 +88,9 @@
             DictionaryToken imageDictionary,
             IReadOnlyList<byte> rawBytes,
             Lazy<IReadOnlyList<byte>> bytes,
-            ColorSpaceDetails colorSpaceDetails)
+            ColorSpaceDetails colorSpaceDetails,
+            IPdfImage sMask,
+            XmpMetadata metadata)
         {
             Bounds = bounds;
             WidthInSamples = widthInSamples;
@@ -98,6 +106,8 @@
             RawBytes = rawBytes;
             ColorSpaceDetails = colorSpaceDetails;
             bytesFactory = bytes;
+            SMask = sMask;
+            Metadata = metadata;
         }
 
         /// <inheritdoc />
