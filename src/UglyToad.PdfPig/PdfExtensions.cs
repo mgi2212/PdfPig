@@ -1,11 +1,13 @@
 ﻿namespace UglyToad.PdfPig
 {
     using System.Collections.Generic;
+    using System.Linq;
     using Core;
     using Filters;
     using Parser.Parts;
     using Tokenization.Scanner;
     using Tokens;
+    using UglyToad.PdfPig.Content;
 
     /// <summary>
     /// Extensions for PDF types.
@@ -67,10 +69,21 @@
         {
             var filters = filterProvider.GetFilters(stream.StreamDictionary, scanner);
 
+            var dico = stream.StreamDictionary;
+
+
+            if (dico.TryGet<StreamToken>(NameToken.Metadata, scanner, out var metadata2))
+            {
+                XmpMetadata xmp = new XmpMetadata(metadata2, filterProvider, scanner);
+                //dico = dico.With(NameToken.Metadata, metadata);
+                string xml = OtherEncodings.BytesAsLatin1String(xmp.GetXmlBytes().ToArray());
+
+            }
+
             var transform = stream.Data;
             for (var i = 0; i < filters.Count; i++)
             {
-                transform = filters[i].Decode(transform, stream.StreamDictionary, i);
+                transform = filters[i].Decode(transform, dico, i);
             }
 
             return transform;

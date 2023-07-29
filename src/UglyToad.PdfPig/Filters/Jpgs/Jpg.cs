@@ -1,17 +1,18 @@
 ﻿namespace BigGustave
 {
+    using Jpgs;
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using Jpgs;
     using UglyToad.PdfPig.Core;
+    using UglyToad.PdfPig.Images.Png;
 
     /// <summary>
     /// A JPEG image.
     /// </summary>
-    public class Jpg
+    internal class Jpg
     {
-        private readonly byte[] rawData;
+        internal readonly byte[] rawData;
 
         /// <summary>
         /// The width of the image in pixels.
@@ -46,7 +47,6 @@
             this.rawData = rawData;
         }
 
-        /*
         /// <summary>
         /// Get the pixel at the given column and row (x, y).
         /// </summary>
@@ -77,7 +77,6 @@
 
             return new Pixel(r, g, b);
         }
-        */
 
         /// <summary>
         /// Open and parse a JPG file from the stream.
