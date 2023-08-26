@@ -1,7 +1,7 @@
 ﻿namespace UglyToad.PdfPig.PdfFonts.Cmap
 {
-    using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.Linq;
     using System.Text;
     using Core;
@@ -150,9 +150,27 @@
 
         private static string CreateStringFromBytes(byte[] bytes)
         {
-            return bytes.Length == 1
-                ? OtherEncodings.BytesAsLatin1String(bytes)
-                : Encoding.BigEndianUnicode.GetString(bytes);
+            if ( bytes.Length == 1)
+            {
+                return OtherEncodings.BytesAsLatin1String(bytes);
+            }
+
+            string unicode = Encoding.BigEndianUnicode.GetString(bytes);
+
+            if ( CharUnicodeInfo.GetUnicodeCategory(unicode, 0) == UnicodeCategory.PrivateUse)
+            {
+                bytes[0] = 0; // This value is 247 instead of 0
+
+                unicode = Encoding.BigEndianUnicode.GetString(bytes);
+
+                if (CharUnicodeInfo.GetUnicodeCategory(unicode, 0) == UnicodeCategory.PrivateUse)
+                {
+                    // check again
+                    // Process further if need be
+                }
+            }
+
+            return unicode;
         }
 
         public void AddCidRange(CidRange range)
