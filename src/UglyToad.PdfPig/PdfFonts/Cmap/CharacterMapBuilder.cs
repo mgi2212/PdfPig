@@ -150,27 +150,21 @@
 
         private static string CreateStringFromBytes(byte[] bytes)
         {
-            if ( bytes.Length == 1)
+            if (bytes.Length == 1)
             {
                 return OtherEncodings.BytesAsLatin1String(bytes);
             }
 
             string unicode = Encoding.BigEndianUnicode.GetString(bytes);
 
-            if ( CharUnicodeInfo.GetUnicodeCategory(unicode, 0) == UnicodeCategory.PrivateUse)
+            if (CharUnicodeInfo.GetUnicodeCategory(unicode, 0) != UnicodeCategory.PrivateUse)
             {
-                bytes[0] = 0; // This value is 247 instead of 0
-
-                unicode = Encoding.BigEndianUnicode.GetString(bytes);
-
-                if (CharUnicodeInfo.GetUnicodeCategory(unicode, 0) == UnicodeCategory.PrivateUse)
-                {
-                    // check again
-                    // Process further if need be
-                }
+                return unicode;
             }
 
-            return unicode;
+            // This is a 'private use' char, we try to fix that and ignore the first byte
+            bytes[0] = 0;
+            return Encoding.BigEndianUnicode.GetString(bytes);
         }
 
         public void AddCidRange(CidRange range)
