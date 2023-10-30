@@ -6,14 +6,14 @@
     /// <summary>
     /// Page factory interface.
     /// </summary>
-    public interface IPageFactory
+    public interface IPageFactory<TPage>
     {
         /// <summary>
         /// Create the page.
         /// </summary>
-        Page Create(int number,
+        TPage Create(int number,
             DictionaryToken dictionary,
             PageTreeMembers pageTreeMembers,
-            NamedDestinations annotationProvider);
+            NamedDestinations namedDestinations);
     }
 }

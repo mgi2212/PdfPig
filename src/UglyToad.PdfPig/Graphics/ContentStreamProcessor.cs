@@ -47,23 +47,23 @@
         public ContentStreamProcessor(
             int pageNumber,
             IResourceStore resourceStore,
-            UserSpaceUnit userSpaceUnit,
-            CropBox cropBox,
-            TransformationMatrix initialMatrix,
-            PageRotationDegrees rotation,
             IPdfTokenScanner pdfScanner,
             IPageContentParser pageContentParser,
             ILookupFilterProvider filterProvider,
+            CropBox cropBox,
+            UserSpaceUnit userSpaceUnit,
+            PageRotationDegrees rotation,
+            TransformationMatrix initialMatrix,
             ParsingOptions parsingOptions)
             : base(pageNumber,
                 resourceStore,
-                userSpaceUnit,
-                cropBox,
-                initialMatrix,
-                rotation,
                 pdfScanner,
                 pageContentParser,
                 filterProvider,
+                cropBox,
+                userSpaceUnit,
+                rotation,
+                initialMatrix,
                 parsingOptions)
         {
         }
@@ -428,7 +428,7 @@
             }
         }
 
-        public override void RenderInlineImage(InlineImage inlineImage)
+        protected override void RenderInlineImage(InlineImage inlineImage)
         {
             images.Add(Union<XObjectContentRecord, InlineImage>.Two(inlineImage));
 

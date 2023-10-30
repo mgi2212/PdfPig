@@ -110,16 +110,26 @@
         /// <summary>
         /// Abstract stream processor constructor.
         /// </summary>
+        /// <param name="pageNumber">The page number, starts at 1.</param>
+        /// <param name="resourceStore"></param>
+        /// <param name="pdfScanner"></param>
+        /// <param name="pageContentParser"></param>
+        /// <param name="filterProvider"></param>
+        /// <param name="cropBox">The page effective crop box, computed as the intersection of the initial crop box and the media box.</param>
+        /// <param name="userSpaceUnit"></param>
+        /// <param name="rotation">The page rotation.</param>
+        /// <param name="initialMatrix"></param>
+        /// <param name="parsingOptions"></param>
         protected BaseStreamProcessor(
             int pageNumber,
             IResourceStore resourceStore,
-            UserSpaceUnit userSpaceUnit,
-            CropBox cropBox,
-            TransformationMatrix initialMatrix,
-            PageRotationDegrees rotation,
             IPdfTokenScanner pdfScanner,
             IPageContentParser pageContentParser,
             ILookupFilterProvider filterProvider,
+            CropBox cropBox,
+            UserSpaceUnit userSpaceUnit,
+            PageRotationDegrees rotation,
+            TransformationMatrix initialMatrix,
             ParsingOptions parsingOptions)
         {
             this.PageNumber = pageNumber;
@@ -802,7 +812,7 @@
         /// <summary>
         /// Render Inline image implementation.
         /// </summary>
-        public abstract void RenderInlineImage(InlineImage inlineImage);
+        protected abstract void RenderInlineImage(InlineImage inlineImage);
 
         /// <inheritdoc/>
         public abstract void BeginMarkedContent(NameToken name,

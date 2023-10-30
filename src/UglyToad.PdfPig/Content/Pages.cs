@@ -10,9 +10,10 @@
 
     internal class Pages
     {
-        private readonly IPageFactory pageFactory;
+        private readonly IPageFactory<Page> pageFactory;
         private readonly IPdfTokenScanner pdfScanner;
         private readonly Dictionary<int, PageTreeNode> pagesByNumber;
+
         public int Count => pagesByNumber.Count;
 
         /// <summary>
@@ -20,7 +21,7 @@
         /// </summary>
         public PageTreeNode PageTree { get; }
 
-        internal Pages(IPageFactory pageFactory, IPdfTokenScanner pdfScanner, PageTreeNode pageTree, Dictionary<int, PageTreeNode> pagesByNumber)
+        internal Pages(IPageFactory<Page> pageFactory, IPdfTokenScanner pdfScanner, PageTreeNode pageTree, Dictionary<int, PageTreeNode> pagesByNumber)
         {
             this.pageFactory = pageFactory ?? throw new ArgumentNullException(nameof(pageFactory));
             this.pdfScanner = pdfScanner ?? throw new ArgumentNullException(nameof(pdfScanner));
@@ -49,7 +50,7 @@
             }
 
             var pageTreeMembers = new PageTreeMembers();
-            
+
             while (pageStack.Count > 0)
             {
                 currentNode = pageStack.Pop();
