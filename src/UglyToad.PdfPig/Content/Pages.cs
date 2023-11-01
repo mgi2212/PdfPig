@@ -2,6 +2,7 @@
 {
     using Core;
     using Outline.Destinations;
+    using Parser;
     using System;
     using System.Collections.Generic;
     using Tokenization.Scanner;
@@ -10,7 +11,8 @@
 
     internal class Pages
     {
-        private readonly IPageFactory<Page> pageFactory;
+        private readonly Dictionary<Type, object> pageFactoryCache;
+        private readonly IPageFactory<Page> defaultPageFactory;
         private readonly IPdfTokenScanner pdfScanner;
         private readonly Dictionary<int, PageTreeNode> pagesByNumber;
 
@@ -21,15 +23,38 @@
         /// </summary>
         public PageTreeNode PageTree { get; }
 
-        internal Pages(IPageFactory<Page> pageFactory, IPdfTokenScanner pdfScanner, PageTreeNode pageTree, Dictionary<int, PageTreeNode> pagesByNumber)
+        internal Pages(IPageFactory<Page> pageFactory,
+            IPdfTokenScanner pdfScanner,
+            PageTreeNode pageTree,
+            Dictionary<int, PageTreeNode> pagesByNumber)
         {
-            this.pageFactory = pageFactory ?? throw new ArgumentNullException(nameof(pageFactory));
+            pageFactoryCache = new Dictionary<Type, object>();
+
+            defaultPageFactory = pageFactory ?? throw new ArgumentNullException(nameof(pageFactory));
             this.pdfScanner = pdfScanner ?? throw new ArgumentNullException(nameof(pdfScanner));
             this.pagesByNumber = pagesByNumber;
             PageTree = pageTree;
+
+            AddPageFactory(defaultPageFactory);
         }
 
-        internal Page GetPage(int pageNumber, NamedDestinations namedDestinations, ParsingOptions parsingOptions)
+        internal Page GetPage(int pageNumber, NamedDestinations namedDestinations, ParsingOptions parsingOptions) =>
+            GetPage(defaultPageFactory, pageNumber, namedDestinations, parsingOptions);
+
+        internal TPage GetPage<TPage>(int pageNumber, NamedDestinations namedDestinations, ParsingOptions parsingOptions)
+        {
+            if (pageFactoryCache.TryGetValue(typeof(TPage), out var f) && f is IPageFactory<TPage> pageFactory)
+            {
+                return GetPage(pageFactory, pageNumber, namedDestinations, parsingOptions);
+            }
+
+            throw new InvalidOperationException($"Could not find page factory of type '{typeof(IPageFactory<TPage>)}' for page type {typeof(TPage)}.");
+        }
+
+        private TPage GetPage<TPage>(IPageFactory<TPage> pageFactory,
+            int pageNumber,
+            NamedDestinations namedDestinations,
+            ParsingOptions parsingOptions)
         {
             if (pageNumber <= 0 || pageNumber > Count)
             {
@@ -78,6 +103,36 @@
                 namedDestinations);
 
             return page;
+        }
+
+        internal void AddPageFactory<TPage>(IPageFactory<TPage> pageFactory)
+        {
+            Type type = typeof(TPage);
+            if (pageFactoryCache.ContainsKey(type))
+            {
+                throw new InvalidOperationException($"Could not add page factory for page type '{type}' as it was already added.");
+            }
+
+            pageFactoryCache.Add(type, pageFactory);
+        }
+
+        internal void AddPageFactory<TPage, TPageFactory>() where TPageFactory : IPageFactory<TPage>
+        {
+            var factory = (PageFactory)this.defaultPageFactory;
+
+            var pageFactory = (IPageFactory<TPage>)Activator.CreateInstance(typeof(TPageFactory),
+                factory.PdfScanner,
+                factory.ResourceStore,
+                factory.FilterProvider,
+                factory.PageContentParser,
+                factory.ParsingOptions);
+
+            if (pageFactory == null)
+            {
+                throw new InvalidOperationException($"Something wrong happened while creating page factory of type '{typeof(TPageFactory)}' for page type '{typeof(TPage)}'.");
+            }
+
+            AddPageFactory(pageFactory);
         }
 
         internal PageTreeNode GetPageNode(int pageNumber)

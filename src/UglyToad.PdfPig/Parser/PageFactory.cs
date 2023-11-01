@@ -24,18 +24,42 @@
         {
         }
 
-        private PageContent GetContent(
-            int pageNumber,
-            IReadOnlyList<byte> contentBytes,
+        protected override Page ProcessPage(int pageNumber,
+            DictionaryToken dictionary,
+            NamedDestinations namedDestinations,
+            MediaBox mediaBox,
             CropBox cropBox,
             UserSpaceUnit userSpaceUnit,
             PageRotationDegrees rotation,
             TransformationMatrix initialMatrix,
-            ParsingOptions parsingOptions)
+            IReadOnlyList<IGraphicsStateOperation> operations)
         {
-            var operations = PageContentParser.Parse(pageNumber,
-                new ByteArrayInputBytes(contentBytes),
-                parsingOptions.Logger);
+            var annotationProvider = new AnnotationProvider(PdfScanner,
+                dictionary,
+                initialMatrix,
+                namedDestinations,
+                ParsingOptions.Logger);
+
+            if (operations == null || operations.Count == 0)
+            {
+                PageContent emptyContent = new PageContent(EmptyArray<IGraphicsStateOperation>.Instance,
+                    EmptyArray<Letter>.Instance,
+                    EmptyArray<PdfPath>.Instance,
+                    EmptyArray<Union<XObjectContentRecord, InlineImage>>.Instance,
+                    EmptyArray<MarkedContentElement>.Instance,
+                    PdfScanner,
+                    FilterProvider,
+                    ResourceStore);
+
+                return new Page(pageNumber,
+                    dictionary,
+                    mediaBox,
+                    cropBox,
+                    rotation,
+                    emptyContent,
+                    annotationProvider,
+                    PdfScanner);
+            }
 
             var context = new ContentStreamProcessor(
                 pageNumber,
@@ -47,49 +71,9 @@
                 userSpaceUnit,
                 rotation,
                 initialMatrix,
-                parsingOptions);
+                ParsingOptions);
 
-            return context.Process(pageNumber, operations);
-        }
-
-        protected override Page ProcessPage(int pageNumber,
-            DictionaryToken dictionary,
-            NamedDestinations namedDestinations,
-            MediaBox mediaBox,
-            CropBox cropBox,
-            UserSpaceUnit userSpaceUnit,
-            PageRotationDegrees rotation,
-            TransformationMatrix initialMatrix,
-            IReadOnlyList<byte> contentBytes)
-        {
-            PageContent content;
-            if (contentBytes == null)
-            {
-                content = new PageContent(EmptyArray<IGraphicsStateOperation>.Instance,
-                    EmptyArray<Letter>.Instance,
-                    EmptyArray<PdfPath>.Instance,
-                    EmptyArray<Union<XObjectContentRecord, InlineImage>>.Instance,
-                    EmptyArray<MarkedContentElement>.Instance,
-                    PdfScanner,
-                    FilterProvider,
-                    ResourceStore);
-            }
-            else
-            {
-                content = GetContent(pageNumber,
-                    contentBytes,
-                    cropBox,
-                    userSpaceUnit,
-                    rotation,
-                    initialMatrix,
-                    ParsingOptions);
-            }
-
-            var annotationProvider = new AnnotationProvider(PdfScanner,
-                dictionary,
-                initialMatrix,
-                namedDestinations,
-                ParsingOptions.Logger);
+            PageContent content = context.Process(pageNumber, operations);
 
             return new Page(pageNumber,
                 dictionary,

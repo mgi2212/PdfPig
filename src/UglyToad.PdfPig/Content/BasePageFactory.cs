@@ -6,6 +6,7 @@
     using Filters;
     using Geometry;
     using Graphics;
+    using Graphics.Operations;
     using Outline.Destinations;
     using Parser;
     using Parser.Parts;
@@ -113,7 +114,7 @@
             if (!dictionary.TryGet(NameToken.Contents, out var contents))
             {
                 // ignored for now, is it possible? check the spec...
-                page = ProcessPage(number, dictionary, namedDestinations, mediaBox, cropBox, userSpaceUnit, rotation, initialMatrix, null);
+                page = ProcessPageInternal(number, dictionary, namedDestinations, mediaBox, cropBox, userSpaceUnit, rotation, initialMatrix, null);
             }
             else if (DirectObjectFinder.TryGet<ArrayToken>(contents, PdfScanner, out var array))
             {
@@ -143,7 +144,7 @@
                     }
                 }
 
-                page = ProcessPage(number, dictionary, namedDestinations, mediaBox, cropBox, userSpaceUnit, rotation, initialMatrix, bytes);
+                page = ProcessPageInternal(number, dictionary, namedDestinations, mediaBox, cropBox, userSpaceUnit, rotation, initialMatrix, bytes);
             }
             else
             {
@@ -156,7 +157,7 @@
 
                 var bytes = contentStream.Decode(FilterProvider, PdfScanner);
 
-                page = ProcessPage(number, dictionary, namedDestinations, mediaBox, cropBox, userSpaceUnit, rotation, initialMatrix, bytes);
+                page = ProcessPageInternal(number, dictionary, namedDestinations, mediaBox, cropBox, userSpaceUnit, rotation, initialMatrix, bytes);
             }
 
             for (var i = 0; i < stackDepth; i++)
@@ -165,6 +166,41 @@
             }
 
             return page;
+        }
+
+        private TPage ProcessPageInternal(
+            int pageNumber,
+            DictionaryToken dictionary,
+            NamedDestinations namedDestinations,
+            MediaBox mediaBox,
+            CropBox cropBox,
+            UserSpaceUnit userSpaceUnit,
+            PageRotationDegrees rotation,
+            TransformationMatrix initialMatrix,
+            IReadOnlyList<byte> contentBytes)
+        {
+            IReadOnlyList<IGraphicsStateOperation> operations;
+
+            if (contentBytes == null || contentBytes.Count == 0)
+            {
+                operations = EmptyArray<IGraphicsStateOperation>.Instance;
+            }
+            else
+            {
+                operations = PageContentParser.Parse(pageNumber,
+                    new ByteArrayInputBytes(contentBytes),
+                    ParsingOptions.Logger);
+            }
+
+            return ProcessPage(pageNumber,
+                dictionary,
+                namedDestinations,
+                mediaBox,
+                cropBox,
+                userSpaceUnit,
+                rotation,
+                initialMatrix,
+                operations);
         }
 
         /// <summary>
@@ -178,7 +214,7 @@
         /// <param name="userSpaceUnit"></param>
         /// <param name="rotation">The page rotation.</param>
         /// <param name="initialMatrix"></param>
-        /// <param name="contentBytes">The page content. Can be <c>null</c> if the page has no content.</param>
+        /// <param name="operations">The page operations. Can be empty if the page has no content.</param>
         protected abstract TPage ProcessPage(
             int pageNumber,
             DictionaryToken dictionary,
@@ -188,7 +224,7 @@
             UserSpaceUnit userSpaceUnit,
             PageRotationDegrees rotation,
             TransformationMatrix initialMatrix,
-            IReadOnlyList<byte> contentBytes);
+            IReadOnlyList<IGraphicsStateOperation> operations);
 
         /// <summary>
         /// Get the user space units.

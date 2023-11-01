@@ -134,6 +134,26 @@
         public static PdfDocument Open(Stream stream, ParsingOptions options = null) => PdfDocumentFactory.Open(stream, options);
 
         /// <summary>
+        /// TODO
+        /// </summary>
+        /// <typeparam name="TPage"></typeparam>
+        /// <param name="pageFactory"></param>
+        public void AddPageFactory<TPage>(IPageFactory<TPage> pageFactory)
+        {
+            pages.AddPageFactory(pageFactory);
+        }
+
+        /// <summary>
+        /// TODO
+        /// </summary>
+        /// <typeparam name="TPage"></typeparam>
+        /// <typeparam name="TPageFactory"></typeparam>
+        public void AddPageFactory<TPage, TPageFactory>() where TPageFactory : IPageFactory<TPage>
+        {
+            pages.AddPageFactory<TPage, TPageFactory>();
+        }
+
+        /// <summary>
         /// Get the page with the specified page number (1 indexed).
         /// </summary>
         /// <param name="pageNumber">The number of the page to return, this starts from 1.</param>
@@ -163,6 +183,36 @@
         }
 
         /// <summary>
+        /// Get the page with the specified page number (1 indexed), using the specified page factory.
+        /// </summary>
+        /// <typeparam name="TPage"></typeparam>
+        /// <param name="pageNumber">The number of the page to return, this starts from 1.</param>
+        /// <returns>The page.</returns>
+        public TPage GetPage<TPage>(int pageNumber)
+        {
+            if (isDisposed)
+            {
+                throw new ObjectDisposedException("Cannot access page after the document is disposed.");
+            }
+
+            parsingOptions.Logger.Debug($"Accessing page {pageNumber}.");
+
+            try
+            {
+                return pages.GetPage<TPage>(pageNumber, namedDestinations, parsingOptions);
+            }
+            catch (Exception ex)
+            {
+                if (IsEncrypted)
+                {
+                    throw new PdfDocumentEncryptedException("Document was encrypted which may have caused error when retrieving page.", encryptionDictionary, ex);
+                }
+
+                throw;
+            }
+        }
+
+        /// <summary>
         /// Gets all pages in this document in order.
         /// </summary>
         public IEnumerable<Page> GetPages()
@@ -170,6 +220,17 @@
             for (var i = 0; i < NumberOfPages; i++)
             {
                 yield return GetPage(i + 1);
+            }
+        }
+
+        /// <summary>
+        /// Gets all pages in this document in order, using the specified page factory.
+        /// </summary>
+        public IEnumerable<TPage> GetPages<TPage>()
+        {
+            for (var i = 0; i < NumberOfPages; i++)
+            {
+                yield return GetPage<TPage>(i + 1);
             }
         }
 
