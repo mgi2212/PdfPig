@@ -1,4 +1,5 @@
-﻿namespace UglyToad.PdfPig.Encryption
+﻿#pragma warning disable SYSLIB0045
+namespace UglyToad.PdfPig.Encryption
 {
     using System;
     using System.Collections.Generic;
